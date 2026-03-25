@@ -39,6 +39,7 @@
 
     html, body {
       height: 100%;
+      height: 100dvh;
       overflow: hidden;
       font-family: 'Nunito', sans-serif;
       background: var(--bg);
@@ -108,7 +109,9 @@
       display: flex;
       flex-direction: column;
       height: 100vh;
+      height: 100dvh;
       overflow: hidden;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
     /* Header */
@@ -385,7 +388,7 @@
 
     /* ── MOBILE ── */
     @media (max-width: 680px) {
-      .game-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 90px 90px; }
+      .game-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 110px 110px; }
       .word-bank { border: none; border-top: 2px solid var(--border); }
       .word-bank.capitals-bank { border-left: none; }
       .states-bank  { order: 2; }
