@@ -617,11 +617,13 @@ function renderMap() {
 
   d3.json('./states-10m.json').then(us => {
     const features = topojson.feature(us, us.objects.states).features;
-    const path = d3.geoPath();
+    const projection = d3.geoAlbersUsa().scale(1280).translate([487.5, 305]);
+    const path = d3.geoPath().projection(projection);
 
+    // Only initialise answers on first load, not on resize re-render
     features.forEach(f => {
       const fips = String(f.id).padStart(2,'0');
-      answers[fips] = { name: null, capital: null };
+      if (!answers[fips]) answers[fips] = { name: null, capital: null };
     });
 
     const g = svg.append('g');
