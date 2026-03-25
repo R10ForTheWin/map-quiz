@@ -832,7 +832,7 @@ function handleDrop(fips, type, value, sourceEl) {
     const correct = type === 'state' ? value === info.name : value === info.capital;
     if (correct) {
       removeHint(fips, type); // clear any active hint for this answer
-      answers[fips][type] = value;
+      answers[fips][type === 'state' ? 'name' : 'capital'] = value;
       sourceEl.classList.add('used', 'correct');
       sourceEl.style.opacity = '';
       updateStateFill(fips);
@@ -862,7 +862,8 @@ function handleDrop(fips, type, value, sourceEl) {
     }
   } else {
     // end mode — allow replacing
-    const prev = answers[fips][type];
+    const aKey = type === 'state' ? 'name' : 'capital';
+    const prev = answers[fips][aKey];
     if (prev !== null) {
       // return old token
       document.querySelectorAll('.token').forEach(t => {
@@ -872,7 +873,7 @@ function handleDrop(fips, type, value, sourceEl) {
         }
       });
     }
-    answers[fips][type] = value;
+    answers[fips][aKey] = value;
     sourceEl.classList.add('used');
     sourceEl.style.opacity = '';
     updateStateFill(fips);
@@ -937,7 +938,7 @@ function autoReveal(fips, type) {
     }
   });
 
-  answers[fips][type] = value;
+  answers[fips][type === 'state' ? 'name' : 'capital'] = value;
   removeHint(fips, type);
   updateStateFill(fips);
 
