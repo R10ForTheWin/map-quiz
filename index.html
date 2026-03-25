@@ -561,7 +561,8 @@ function startGame(mode) {
   document.getElementById('checkBtn').style.display   = mode === 'end' ? 'block' : 'none';
 
   buildWordBanks();
-  renderMap();
+  // Defer until browser has finished layout so container has real pixel dimensions
+  requestAnimationFrame(() => requestAnimationFrame(renderMap));
 }
 
 function resetGame() {
@@ -603,7 +604,15 @@ function makeToken(type, value) {
 
 // ── MAP ──
 function renderMap() {
-  const svg = d3.select('#map-svg');
+  const container = document.querySelector('.map-container');
+  const W = container.clientWidth  || (window.innerWidth  - 400);
+  const H = container.clientHeight || (window.innerHeight - 80);
+
+  const svg = d3.select('#map-svg')
+    .attr('width',  W)
+    .attr('height', H)
+    .attr('viewBox', '0 0 975 610')
+    .attr('preserveAspectRatio', 'xMidYMid meet');
   svg.selectAll('*').remove();
 
   d3.json('./states-10m.json').then(us => {
@@ -858,6 +867,11 @@ function showToast(msg, cls) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
+
+// ── RESIZE ──
+window.addEventListener('resize', () => {
+  if (gameMode) requestAnimationFrame(renderMap);
+});
 
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
