@@ -831,6 +831,7 @@ function handleDrop(fips, type, value, sourceEl) {
   if (gameMode === 'live') {
     const correct = type === 'state' ? value === info.name : value === info.capital;
     if (correct) {
+      removeHint(fips, type); // clear any active hint for this answer
       answers[fips][type] = value;
       sourceEl.classList.add('used', 'correct');
       sourceEl.style.opacity = '';
@@ -842,20 +843,21 @@ function handleDrop(fips, type, value, sourceEl) {
       if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
     } else {
       sourceEl.style.opacity = '';
-      const key = `${fips}-${type}`;
-      wrongCounts[key] = (wrongCounts[key] || 0) + 1;
-      const tries = wrongCounts[key];
+      // Track wrong attempts by token value (not by destination state)
+      // so dragging "Alabama" onto 3 different wrong states counts as 3 tries
+      wrongCounts[value] = (wrongCounts[value] || 0) + 1;
+      const tries = wrongCounts[value];
+      const correctFips = type === 'state' ? byName[value] : byCapital[value];
 
       if (tries >= 5) {
-        autoReveal(fips, type);
+        autoReveal(correctFips, type);
       } else if (tries >= 3) {
-        const correct = type === 'state' ? info.name : info.capital;
-        showHint(fips, type, correct);
+        showHint(correctFips, type, value);
         flashPath(fips, false);
       } else {
         flashPath(fips, false);
-        const left = 5 - tries;
-        showToast(`✗ Not quite — ${left} tries left before hint`, 't-wrong');
+        const left = 3 - tries;
+        showToast(`✗ Not quite — ${left} more ${left === 1 ? 'try' : 'tries'} before Oreo helps!`, 't-wrong');
       }
     }
   } else {
@@ -882,14 +884,19 @@ function updateStateFill(fips) {
   if (!p) return;
   const a = answers[fips];
   const isHinting = hintingStates[`${fips}-state`] || hintingStates[`${fips}-capital`];
+  p.classList.remove('name-placed','both-placed','half-done','correct','hinting','name-correct','cap-correct');
+  p.style.fill = ''; // clear any previous inline stripe fill
   if (gameMode === 'live') {
-    p.classList.remove('name-placed','both-placed','half-done','correct','hinting','name-correct','cap-correct');
-    if (a.name && a.capital)       p.classList.add('correct');      // both correct → solid green
-    else if (isHinting)            p.classList.add('hinting');      // hint active → pulsing yellow
-    else if (a.name && !a.capital) p.classList.add('name-correct'); // name only → blue stripes
-    else if (a.capital && !a.name) p.classList.add('cap-correct');  // capital only → orange stripes
+    if (a.name && a.capital) {
+      p.classList.add('correct');                        // both correct → solid green
+    } else if (isHinting) {
+      p.classList.add('hinting');                        // hint active → pulsing yellow
+    } else if (a.name && !a.capital) {
+      p.style.fill = 'url(#stripe-blue)';               // name only → blue stripes (inline style)
+    } else if (a.capital && !a.name) {
+      p.style.fill = 'url(#stripe-orange)';             // capital only → orange stripes (inline style)
+    }
   } else {
-    p.classList.remove('name-placed','both-placed');
     if (a.name && a.capital) p.classList.add('both-placed');
     else if (a.name)         p.classList.add('name-placed');
   }
