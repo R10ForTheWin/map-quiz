@@ -215,10 +215,9 @@
       transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
       user-select: none;
       touch-action: none;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.2;
     }
     .token:hover {
       transform: translateY(-2px) scale(1.03);
@@ -635,9 +634,11 @@ function renderMap() {
 
   d3.json('./states-10m.json').then(us => {
     const features = topojson.feature(us, us.objects.states).features;
-    const nation   = topojson.feature(us, us.objects.nation);
-    // fitSize scales the projection to fill the actual container with padding
-    const projection = d3.geoAlbersUsa().fitExtent([[20, 20], [W - 20, H - 20]], nation);
+    // Scale the standard 975×610 Albers USA projection to fill this container
+    const scale = Math.min((W - 40) / 975, (H - 40) / 610);
+    const projection = d3.geoAlbersUsa()
+      .scale(1280 * scale)
+      .translate([W / 2, (H / 2) + (H * 0.02)]);
     const path = d3.geoPath().projection(projection);
 
     // Only initialise answers on first load, not on resize re-render
