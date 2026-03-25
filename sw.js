@@ -1,5 +1,8 @@
-const CACHE = 'map-quiz-v1';
-const PRECACHE = ['./','./index.html','./manifest.json','./icon.svg'];
+const CACHE = 'map-quest-v2';
+const PRECACHE = [
+  './', './index.html', './manifest.json', './icon.svg',
+  './oreo-logo.png', './d3.min.js', './topojson.min.js', './states-10m.json'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)));
