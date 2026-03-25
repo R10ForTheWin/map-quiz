@@ -1,7 +1,7 @@
-const CACHE = 'map-quest-v4';
+const CACHE = 'map-quest-v5';
 const PRECACHE = [
   './', './index.html', './manifest.json', './icon.svg',
-  './oreo-logo.png', './d3.min.js', './topojson.min.js', './states-10m.json'
+  './oreo-logo.png', './oreo-hint.png', './d3.min.js', './topojson.min.js', './states-10m.json'
 ];
 
 self.addEventListener('install', e => {

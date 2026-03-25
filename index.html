@@ -28,6 +28,8 @@
       --wrong-light: #ffd4d4;
       --gold: #FFC800;
       --gold-dark: #cc9f00;
+      --orange: #FF9600;
+      --orange-dark: #cc7700;
       --bg: #eef6fb;
       --card: #ffffff;
       --border: #c0dff0;
@@ -236,6 +238,10 @@
     .token.correct { border-left-color: var(--correct); color: #2a6a00; background: #f0fce0; }
     .token.wrong   { border-left-color: var(--wrong);   color: #8a0000; background: #fff0f0; }
 
+    /* Capital tokens get orange accent */
+    .token[data-type="capital"] { border-left-color: var(--orange); }
+    .token[data-type="capital"]:hover { box-shadow: 0 6px 16px rgba(255,150,0,0.25); border-color: var(--orange); background: #fff5e8; }
+
     /* ── MAP ── */
     .map-container {
       background: var(--bg);
@@ -262,10 +268,53 @@
     }
     .state-path.hoverable:hover { fill: #a8cfe0; }
     .state-path.drag-over { fill: var(--gold) !important; stroke: var(--gold-dark); stroke-width: 2.5; filter: drop-shadow(0 0 6px rgba(255,200,0,0.7)); }
-    .state-path.name-placed  { fill: #8ec8e8; }
-    .state-path.both-placed  { fill: var(--primary); fill-opacity: 0.6; }
-    .state-path.correct { fill: var(--correct) !important; fill-opacity: 0.75; }
-    .state-path.wrong   { fill: var(--wrong)   !important; fill-opacity: 0.75; }
+    .state-path.name-placed   { fill: #8ec8e8; }
+    .state-path.both-placed   { fill: var(--primary); fill-opacity: 0.6; }
+    .state-path.name-correct  { fill: url(#stripe-blue)   !important; } /* state name correct → blue stripes */
+    .state-path.cap-correct   { fill: url(#stripe-orange) !important; } /* capital correct → orange stripes */
+    .state-path.correct       { fill: var(--correct) !important; fill-opacity: 0.9; } /* both correct → solid green */
+    .state-path.wrong         { fill: var(--wrong)   !important; fill-opacity: 0.75; }
+    .state-path.hinting       { fill: #FFD966 !important; fill-opacity: 0.9; }
+
+    @keyframes hintPulse {
+      0%, 100% { fill-opacity: 0.9; }
+      50%      { fill-opacity: 0.5; }
+    }
+    .state-path.hinting { animation: hintPulse 1.4s ease-in-out infinite; }
+
+    /* ── OREO HINT BUBBLE ── */
+    #oreo-hint {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      z-index: 500;
+      transform: translateY(140px);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    #oreo-hint.show { transform: translateY(0); }
+    .oreo-hint-img {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+    .oreo-bubble {
+      background: white;
+      border-radius: 18px 18px 18px 4px;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+      max-width: 230px;
+      border: 2px solid var(--border);
+      line-height: 1.35;
+    }
 
     .state-borders {
       fill: none;
@@ -405,6 +454,10 @@
 
 <div id="drag-ghost"></div>
 <div id="toast"></div>
+<div id="oreo-hint" style="display:none">
+  <img src="oreo-hint.png" alt="Oreo" class="oreo-hint-img">
+  <div class="oreo-bubble"><span id="oreo-hint-text"></span></div>
+</div>
 
 <!-- START MODAL -->
 <div id="startModal" class="modal-overlay">
@@ -554,19 +607,26 @@ STATE_DATA.forEach(s => {
 
 // ── GAME STATE ──
 let gameMode = null;
-let answers  = {};   // { fips: { name: null|string, capital: null|string } }
+let answers      = {};
+let wrongCounts  = {};  // { 'fips-type': number }
+let hintingStates = {}; // { 'fips-type': true } — tracks active hints
 let scStates = 0, scCapitals = 0;
-let dragItem = null; // { type, value, sourceEl }
+let dragItem = null;
 let prevHoverEl = null;
 let currentHoverFips = null;
+let mapFeatures = null;
+let mapPathGen  = null;
+let mapG        = null;
 const ghost = document.getElementById('drag-ghost');
 
 // ── START / RESET ──
 function startGame(mode) {
-  gameMode = mode;
-  answers  = {};
-  scStates = 0;
-  scCapitals = 0;
+  gameMode      = mode;
+  answers       = {};
+  wrongCounts   = {};
+  hintingStates = {};
+  scStates      = 0;
+  scCapitals    = 0;
 
   document.getElementById('startModal').style.display = 'none';
   document.getElementById('endModal').style.display   = 'none';
@@ -632,6 +692,21 @@ function renderMap() {
     .attr('viewBox', `0 0 ${W} ${H}`);
   svg.selectAll('*').remove();
 
+  // SVG pattern defs for stripe fills
+  const defs = svg.append('defs');
+  const bp = defs.append('pattern').attr('id','stripe-blue')
+    .attr('patternUnits','userSpaceOnUse').attr('width',8).attr('height',8)
+    .attr('patternTransform','rotate(45)');
+  bp.append('rect').attr('width',8).attr('height',8).attr('fill','#d6edf7');
+  bp.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',8)
+    .attr('stroke','#007aaf').attr('stroke-width',4).attr('stroke-opacity',0.85);
+  const op = defs.append('pattern').attr('id','stripe-orange')
+    .attr('patternUnits','userSpaceOnUse').attr('width',8).attr('height',8)
+    .attr('patternTransform','rotate(45)');
+  op.append('rect').attr('width',8).attr('height',8).attr('fill','#fde8cc');
+  op.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',8)
+    .attr('stroke','#FF9600').attr('stroke-width',4).attr('stroke-opacity',0.85);
+
   d3.json('./states-10m.json').then(us => {
     const features = topojson.feature(us, us.objects.states).features;
     // Scale the standard 975×610 Albers USA projection to fill this container
@@ -651,7 +726,10 @@ function renderMap() {
     document.getElementById('map-loading').style.display = 'none';
     document.getElementById('map-svg').style.display = 'block';
 
+    mapFeatures = features;
+    mapPathGen  = path;
     const g = svg.append('g');
+    mapG = g;
 
     g.selectAll('.state-path')
       .data(features)
@@ -764,8 +842,21 @@ function handleDrop(fips, type, value, sourceEl) {
       if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
     } else {
       sourceEl.style.opacity = '';
-      flashPath(fips, false);
-      showToast('✗ Not quite — try again!', 't-wrong');
+      const key = `${fips}-${type}`;
+      wrongCounts[key] = (wrongCounts[key] || 0) + 1;
+      const tries = wrongCounts[key];
+
+      if (tries >= 5) {
+        autoReveal(fips, type);
+      } else if (tries >= 3) {
+        const correct = type === 'state' ? info.name : info.capital;
+        showHint(fips, type, correct);
+        flashPath(fips, false);
+      } else {
+        flashPath(fips, false);
+        const left = 5 - tries;
+        showToast(`✗ Not quite — ${left} tries left before hint`, 't-wrong');
+      }
     }
   } else {
     // end mode — allow replacing
@@ -789,10 +880,19 @@ function handleDrop(fips, type, value, sourceEl) {
 function updateStateFill(fips) {
   const p = document.querySelector(`.state-path[data-fips="${fips}"]`);
   if (!p) return;
-  p.classList.remove('name-placed','both-placed');
   const a = answers[fips];
-  if (a.name && a.capital) p.classList.add('both-placed');
-  else if (a.name)         p.classList.add('name-placed');
+  const isHinting = hintingStates[`${fips}-state`] || hintingStates[`${fips}-capital`];
+  if (gameMode === 'live') {
+    p.classList.remove('name-placed','both-placed','half-done','correct','hinting','name-correct','cap-correct');
+    if (a.name && a.capital)       p.classList.add('correct');      // both correct → solid green
+    else if (isHinting)            p.classList.add('hinting');      // hint active → pulsing yellow
+    else if (a.name && !a.capital) p.classList.add('name-correct'); // name only → blue stripes
+    else if (a.capital && !a.name) p.classList.add('cap-correct');  // capital only → orange stripes
+  } else {
+    p.classList.remove('name-placed','both-placed');
+    if (a.name && a.capital) p.classList.add('both-placed');
+    else if (a.name)         p.classList.add('name-placed');
+  }
 }
 
 function flashPath(fips, ok) {
@@ -802,8 +902,44 @@ function flashPath(fips, ok) {
   p.classList.add(cls);
   setTimeout(() => {
     p.classList.remove(cls);
-    if (ok) p.classList.add('correct');
+    updateStateFill(fips); // re-apply correct visual state (stripes, green, hinting, etc.)
   }, 750);
+}
+
+// ── HINTS & AUTO-REVEAL ──
+function showHint(fips, type, correctValue) {
+  hintingStates[`${fips}-${type}`] = true;
+  updateStateFill(fips); // turns state yellow/pulsing
+  showOreoMessage(`Psst! Starts with "${correctValue[0]}" · ${correctValue.length} letters 🐾`);
+}
+
+function removeHint(fips, type) {
+  delete hintingStates[`${fips}-${type}`];
+  // updateStateFill will be called by the caller; hinting class will be re-evaluated
+}
+
+function autoReveal(fips, type) {
+  const info  = byFips[fips];
+  const value = type === 'state' ? info.name : info.capital;
+
+  // Mark token as used/correct in the bank
+  document.querySelectorAll('.token').forEach(t => {
+    if (t.dataset.type === type && t.dataset.value === value) {
+      t.classList.add('used', 'correct');
+      t.style.opacity = '';
+    }
+  });
+
+  answers[fips][type] = value;
+  removeHint(fips, type);
+  updateStateFill(fips);
+
+  if (type === 'state') { scStates++;   document.getElementById('scoreStates').textContent   = scStates;   }
+  else                  { scCapitals++; document.getElementById('scoreCapitals').textContent = scCapitals; }
+
+  flashPath(fips, true);
+  showOreoMessage(`Here you go — "${value}"! 🐾`);
+  if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
 }
 
 // ── CHECK ANSWERS (end mode) ──
@@ -883,6 +1019,21 @@ function launchConfetti() {
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 5000);
   }
+}
+
+// ── OREO SPEECH BUBBLE ──
+let oreoMsgTimer;
+function showOreoMessage(msg) {
+  const el  = document.getElementById('oreo-hint');
+  const txt = document.getElementById('oreo-hint-text');
+  txt.textContent = msg;
+  el.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  clearTimeout(oreoMsgTimer);
+  oreoMsgTimer = setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => { el.style.display = 'none'; }, 420);
+  }, 3800);
 }
 
 // ── TOAST ──
