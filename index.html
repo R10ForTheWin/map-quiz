@@ -697,9 +697,9 @@ function renderMap() {
   const bp = defs.append('pattern').attr('id','stripe-blue')
     .attr('patternUnits','userSpaceOnUse').attr('width',8).attr('height',8)
     .attr('patternTransform','rotate(45)');
-  bp.append('rect').attr('width',8).attr('height',8).attr('fill','#d6edf7');
+  bp.append('rect').attr('width',8).attr('height',8).attr('fill','#ffffff');
   bp.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',8)
-    .attr('stroke','#007aaf').attr('stroke-width',4).attr('stroke-opacity',0.85);
+    .attr('stroke','#007aaf').attr('stroke-width',4);
   const op = defs.append('pattern').attr('id','stripe-orange')
     .attr('patternUnits','userSpaceOnUse').attr('width',8).attr('height',8)
     .attr('patternTransform','rotate(45)');
