@@ -1,0 +1,18 @@
+{
+  "name": "Rose's Map Quiz",
+  "short_name": "Map Quiz",
+  "description": "Drag US state names and capitals onto the map!",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#007aaf",
+  "theme_color": "#007aaf",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

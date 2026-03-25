@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#007aaf">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Map Quiz">
+  <title>Rose's Map Quiz</title>
+  <link rel="manifest" href="manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson@3"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #007aaf;
+      --primary-dark: #005f87;
+      --primary-light: #e0f4ff;
+      --primary-mid: #4da6cc;
+      --correct: #58CC02;
+      --correct-dark: #45a302;
+      --correct-light: #d7f5b0;
+      --wrong: #FF4B4B;
+      --wrong-dark: #cc3b3b;
+      --wrong-light: #ffd4d4;
+      --gold: #FFC800;
+      --gold-dark: #cc9f00;
+      --bg: #eef6fb;
+      --card: #ffffff;
+      --border: #c0dff0;
+      --text: #1a2e3b;
+      --text-light: #5a7a8e;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── START MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #007aaf 0%, #004d7a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .start-card {
+      background: white;
+      border-radius: 28px;
+      padding: 44px 40px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.75); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .start-emoji  { font-size: 72px; display: block; margin-bottom: 10px; }
+    .start-card h1 { font-size: 30px; font-weight: 900; color: var(--primary); margin-bottom: 6px; }
+    .start-subtitle { color: var(--text-light); font-size: 15px; font-weight: 600; margin-bottom: 32px; }
+    .mode-label { font-size: 12px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px; }
+
+    .mode-btn {
+      display: flex;
+      align-items: flex-start;
+      width: 100%;
+      padding: 16px 20px;
+      border: 3px solid transparent;
+      border-radius: var(--radius);
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-bottom: 12px;
+      text-align: left;
+      gap: 14px;
+    }
+    .mode-btn .m-icon { font-size: 30px; flex-shrink: 0; margin-top: 2px; }
+    .mode-btn .m-text { display: flex; flex-direction: column; }
+    .mode-btn .m-title { font-size: 17px; font-weight: 800; }
+    .mode-btn .m-desc  { font-size: 12px; font-weight: 600; opacity: 0.75; margin-top: 2px; }
+
+    .mode-btn.live { background: var(--correct-light); border-color: var(--correct); color: #2a6a00; }
+    .mode-btn.live:hover { background: var(--correct); color: white; transform: translateY(-2px); box-shadow: 0 6px 0 var(--correct-dark); }
+
+    .mode-btn.end { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
+    .mode-btn.end:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 6px 0 var(--primary-dark); }
+
+    /* ── MAIN APP ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: var(--primary);
+      color: white;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(0,95,135,0.45);
+      z-index: 10;
+    }
+    .header-brand { display: flex; align-items: center; gap: 8px; }
+    .header-brand .b-icon { font-size: 22px; }
+    .header-brand h1 { font-size: 17px; font-weight: 900; }
+
+    .header-scores { display: flex; gap: 8px; }
+    .score-pill {
+      background: rgba(255,255,255,0.18);
+      border: 2px solid rgba(255,255,255,0.35);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .score-pill .s-num { font-size: 15px; font-weight: 900; }
+
+    .btn-check {
+      background: var(--gold);
+      color: #3a2a00;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 18px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 4px 0 var(--gold-dark);
+      transition: all 0.1s;
+    }
+    .btn-check:hover  { transform: translateY(-1px); box-shadow: 0 5px 0 var(--gold-dark); }
+    .btn-check:active { transform: translateY(2px);  box-shadow: 0 2px 0 var(--gold-dark); }
+
+    /* ── GAME LAYOUT ── */
+    .game-layout {
+      display: grid;
+      grid-template-columns: 190px 1fr 190px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* Word Banks */
+    .word-bank {
+      background: white;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 2px solid var(--border);
+    }
+    .word-bank.capitals-bank { border-right: none; border-left: 2px solid var(--border); }
+
+    .bank-header {
+      background: linear-gradient(90deg, var(--primary), var(--primary-mid));
+      color: white;
+      padding: 9px 12px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .bank-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .bank-list::-webkit-scrollbar { width: 4px; }
+    .bank-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .token {
+      background: white;
+      border: 2px solid #ddedf5;
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 6px 9px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: grab;
+      transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
+      user-select: none;
+      touch-action: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .token:hover {
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 4px 12px rgba(0,122,175,0.18);
+      border-color: var(--primary);
+    }
+    .token.used {
+      opacity: 0.32;
+      text-decoration: line-through;
+      cursor: not-allowed;
+      pointer-events: none;
+      border-left-color: #aaa;
+    }
+    .token.correct { border-left-color: var(--correct); color: #2a6a00; background: #f0fce0; }
+    .token.wrong   { border-left-color: var(--wrong);   color: #8a0000; background: #fff0f0; }
+
+    /* ── MAP ── */
+    .map-container {
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #map-svg {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+
+    .state-path {
+      fill: #ccdde8;
+      stroke: white;
+      stroke-width: 1;
+      cursor: default;
+      transition: fill 0.25s;
+    }
+    .state-path.hoverable:hover { fill: #a8cfe0; }
+    .state-path.drag-over { fill: var(--primary-mid) !important; stroke: var(--primary-dark); stroke-width: 2; }
+    .state-path.name-placed  { fill: #8ec8e8; }
+    .state-path.both-placed  { fill: var(--primary); fill-opacity: 0.6; }
+    .state-path.correct { fill: var(--correct) !important; fill-opacity: 0.75; }
+    .state-path.wrong   { fill: var(--wrong)   !important; fill-opacity: 0.75; }
+
+    .state-borders {
+      fill: none;
+      stroke: rgba(255,255,255,0.7);
+      stroke-width: 0.5;
+      pointer-events: none;
+    }
+
+    @keyframes flashGreen {
+      0%   { fill: #aaf040; fill-opacity: 1; }
+      60%  { fill: var(--correct); fill-opacity: 1; }
+      100% { fill: var(--correct); fill-opacity: 0.75; }
+    }
+    @keyframes flashRed {
+      0%   { fill: #ff8080; fill-opacity: 1; }
+      60%  { fill: var(--wrong); fill-opacity: 1; }
+      100% { fill: #ccdde8; fill-opacity: 1; }
+    }
+    .flash-correct { animation: flashGreen 0.7s ease forwards; }
+    .flash-wrong   { animation: flashRed   0.8s ease forwards; }
+
+    /* ── DRAG GHOST ── */
+    #drag-ghost {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      background: var(--primary);
+      color: white;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      transform: translate(-50%, -120%) rotate(-3deg) scale(1.08);
+      display: none;
+      white-space: nowrap;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      padding: 11px 24px;
+      border-radius: 24px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 14px;
+      color: white;
+      z-index: 500;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.t-correct { background: var(--correct); }
+    #toast.t-wrong   { background: var(--wrong); }
+    #toast.t-info    { background: var(--text); }
+
+    /* ── END MODAL ── */
+    .end-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,20,40,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .end-card {
+      background: white;
+      border-radius: 28px;
+      padding: 44px 40px 36px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .end-trophy { font-size: 80px; display: block; margin-bottom: 12px; }
+    .end-card h2 { font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 4px; }
+    .end-tagline { font-size: 14px; color: var(--text-light); font-weight: 600; margin-bottom: 24px; }
+    .end-score-big { font-size: 72px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+    .end-score-sub { font-size: 14px; color: var(--text-light); font-weight: 700; margin-bottom: 24px; }
+    .end-breakdown { display: flex; gap: 14px; justify-content: center; margin-bottom: 28px; }
+    .bd-item { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 28px; flex: 1; }
+    .bd-label { font-size: 11px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.8px; }
+    .bd-value { font-size: 30px; font-weight: 900; color: var(--primary); }
+
+    .btn-replay {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 17px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 var(--primary-dark);
+      transition: all 0.1s;
+    }
+    .btn-replay:hover  { transform: translateY(-2px); box-shadow: 0 8px 0 var(--primary-dark); }
+    .btn-replay:active { transform: translateY(3px);  box-shadow: 0 3px 0 var(--primary-dark); }
+
+    /* ── CONFETTI ── */
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg) scale(0.5); opacity: 0; }
+    }
+    .confetti { position: fixed; top: -12px; pointer-events: none; animation: confettiFall 3.5s ease-in forwards; border-radius: 2px; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 680px) {
+      .game-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 90px 90px; }
+      .word-bank { border: none; border-top: 2px solid var(--border); }
+      .word-bank.capitals-bank { border-left: none; }
+      .states-bank  { order: 2; }
+      .map-container { order: 1; }
+      .capitals-bank { order: 3; }
+      .bank-list { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding: 8px; gap: 5px; }
+      .token { flex-shrink: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="drag-ghost"></div>
+<div id="toast"></div>
+
+<!-- START MODAL -->
+<div id="startModal" class="modal-overlay">
+  <div class="start-card">
+    <span class="start-emoji">🗺️</span>
+    <h1>Rose's Map Quiz</h1>
+    <p class="start-subtitle">Drag state names & capitals onto the map!</p>
+    <p class="mode-label">Pick your mode</p>
+    <button class="mode-btn live" onclick="startGame('live')">
+      <span class="m-icon">⚡</span>
+      <span class="m-text">
+        <span class="m-title">Score As You Go</span>
+        <span class="m-desc">Instant right / wrong feedback on every drop</span>
+      </span>
+    </button>
+    <button class="mode-btn end" onclick="startGame('end')">
+      <span class="m-icon">🏆</span>
+      <span class="m-text">
+        <span class="m-title">Score At The End</span>
+        <span class="m-desc">Place everything first, then check your score</span>
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- END MODAL -->
+<div id="endModal" class="end-modal" style="display:none">
+  <div class="end-card">
+    <span class="end-trophy" id="endTrophy">🏆</span>
+    <h2 id="endTitle">Amazing Job, Rose!</h2>
+    <p class="end-tagline" id="endTagline">You crushed it!</p>
+    <div class="end-score-big" id="endScoreBig">100</div>
+    <div class="end-score-sub">out of 100 points</div>
+    <div class="end-breakdown">
+      <div class="bd-item">
+        <div class="bd-label">States</div>
+        <div class="bd-value" id="endStates">50/50</div>
+      </div>
+      <div class="bd-item">
+        <div class="bd-label">Capitals</div>
+        <div class="bd-value" id="endCapitals">50/50</div>
+      </div>
+    </div>
+    <button class="btn-replay" onclick="resetGame()">Play Again! 🎉</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <header class="header">
+    <div class="header-brand">
+      <span class="b-icon">🗺️</span>
+      <h1>Rose's Map Quiz</h1>
+    </div>
+    <div class="header-scores">
+      <div class="score-pill">📍 States <span class="s-num" id="scoreStates">0</span>/50</div>
+      <div class="score-pill">🏛 Capitals <span class="s-num" id="scoreCapitals">0</span>/50</div>
+    </div>
+    <div>
+      <button class="btn-check" id="checkBtn" onclick="checkAnswers()" style="display:none">Check Answers ✓</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <aside class="word-bank states-bank">
+      <div class="bank-header">📍 State Names</div>
+      <div class="bank-list" id="statesBank"></div>
+    </aside>
+    <main class="map-container">
+      <svg id="map-svg" viewBox="0 0 975 610" preserveAspectRatio="xMidYMid meet"></svg>
+    </main>
+    <aside class="word-bank capitals-bank">
+      <div class="bank-header">🏛 Capitals</div>
+      <div class="bank-list" id="capitalsBank"></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+// ── STATE DATA ──
+const STATE_DATA = [
+  { fips:'01', name:'Alabama',        capital:'Montgomery'    },
+  { fips:'02', name:'Alaska',         capital:'Juneau'        },
+  { fips:'04', name:'Arizona',        capital:'Phoenix'       },
+  { fips:'05', name:'Arkansas',       capital:'Little Rock'   },
+  { fips:'06', name:'California',     capital:'Sacramento'    },
+  { fips:'08', name:'Colorado',       capital:'Denver'        },
+  { fips:'09', name:'Connecticut',    capital:'Hartford'      },
+  { fips:'10', name:'Delaware',       capital:'Dover'         },
+  { fips:'12', name:'Florida',        capital:'Tallahassee'   },
+  { fips:'13', name:'Georgia',        capital:'Atlanta'       },
+  { fips:'15', name:'Hawaii',         capital:'Honolulu'      },
+  { fips:'16', name:'Idaho',          capital:'Boise'         },
+  { fips:'17', name:'Illinois',       capital:'Springfield'   },
+  { fips:'18', name:'Indiana',        capital:'Indianapolis'  },
+  { fips:'19', name:'Iowa',           capital:'Des Moines'    },
+  { fips:'20', name:'Kansas',         capital:'Topeka'        },
+  { fips:'21', name:'Kentucky',       capital:'Frankfort'     },
+  { fips:'22', name:'Louisiana',      capital:'Baton Rouge'   },
+  { fips:'23', name:'Maine',          capital:'Augusta'       },
+  { fips:'24', name:'Maryland',       capital:'Annapolis'     },
+  { fips:'25', name:'Massachusetts',  capital:'Boston'        },
+  { fips:'26', name:'Michigan',       capital:'Lansing'       },
+  { fips:'27', name:'Minnesota',      capital:'Saint Paul'    },
+  { fips:'28', name:'Mississippi',    capital:'Jackson'       },
+  { fips:'29', name:'Missouri',       capital:'Jefferson City'},
+  { fips:'30', name:'Montana',        capital:'Helena'        },
+  { fips:'31', name:'Nebraska',       capital:'Lincoln'       },
+  { fips:'32', name:'Nevada',         capital:'Carson City'   },
+  { fips:'33', name:'New Hampshire',  capital:'Concord'       },
+  { fips:'34', name:'New Jersey',     capital:'Trenton'       },
+  { fips:'35', name:'New Mexico',     capital:'Santa Fe'      },
+  { fips:'36', name:'New York',       capital:'Albany'        },
+  { fips:'37', name:'North Carolina', capital:'Raleigh'       },
+  { fips:'38', name:'North Dakota',   capital:'Bismarck'      },
+  { fips:'39', name:'Ohio',           capital:'Columbus'      },
+  { fips:'40', name:'Oklahoma',       capital:'Oklahoma City' },
+  { fips:'41', name:'Oregon',         capital:'Salem'         },
+  { fips:'42', name:'Pennsylvania',   capital:'Harrisburg'    },
+  { fips:'44', name:'Rhode Island',   capital:'Providence'    },
+  { fips:'45', name:'South Carolina', capital:'Columbia'      },
+  { fips:'46', name:'South Dakota',   capital:'Pierre'        },
+  { fips:'47', name:'Tennessee',      capital:'Nashville'     },
+  { fips:'48', name:'Texas',          capital:'Austin'        },
+  { fips:'49', name:'Utah',           capital:'Salt Lake City'},
+  { fips:'50', name:'Vermont',        capital:'Montpelier'    },
+  { fips:'51', name:'Virginia',       capital:'Richmond'      },
+  { fips:'53', name:'Washington',     capital:'Olympia'       },
+  { fips:'54', name:'West Virginia',  capital:'Charleston'    },
+  { fips:'55', name:'Wisconsin',      capital:'Madison'       },
+  { fips:'56', name:'Wyoming',        capital:'Cheyenne'      },
+];
+
+// quick lookups
+const byFips    = {};
+const byName    = {};
+const byCapital = {};
+STATE_DATA.forEach(s => {
+  byFips[s.fips]       = s;
+  byName[s.name]       = s.fips;
+  byCapital[s.capital] = s.fips;
+});
+
+// ── GAME STATE ──
+let gameMode = null;
+let answers  = {};   // { fips: { name: null|string, capital: null|string } }
+let scStates = 0, scCapitals = 0;
+let dragItem = null; // { type, value, sourceEl }
+let prevHoverEl = null;
+let currentHoverFips = null;
+const ghost = document.getElementById('drag-ghost');
+
+// ── START / RESET ──
+function startGame(mode) {
+  gameMode = mode;
+  answers  = {};
+  scStates = 0;
+  scCapitals = 0;
+
+  document.getElementById('startModal').style.display = 'none';
+  document.getElementById('endModal').style.display   = 'none';
+  document.getElementById('app').style.display        = 'flex';
+  document.getElementById('scoreStates').textContent   = '0';
+  document.getElementById('scoreCapitals').textContent = '0';
+  document.getElementById('checkBtn').style.display   = mode === 'end' ? 'block' : 'none';
+
+  buildWordBanks();
+  renderMap();
+}
+
+function resetGame() {
+  document.getElementById('endModal').style.display   = 'none';
+  document.getElementById('startModal').style.display = 'flex';
+  // map will be fully re-rendered on next startGame
+}
+
+// ── WORD BANKS ──
+function buildWordBanks() {
+  const sb = document.getElementById('statesBank');
+  const cb = document.getElementById('capitalsBank');
+  sb.innerHTML = '';
+  cb.innerHTML = '';
+
+  const byStateName   = [...STATE_DATA].sort((a,b) => a.name.localeCompare(b.name));
+  const byCapitalName = [...STATE_DATA].sort((a,b) => a.capital.localeCompare(b.capital));
+
+  byStateName.forEach(s => {
+    const el = makeToken('state', s.name);
+    sb.appendChild(el);
+  });
+  byCapitalName.forEach(s => {
+    const el = makeToken('capital', s.capital);
+    cb.appendChild(el);
+  });
+}
+
+function makeToken(type, value) {
+  const el = document.createElement('div');
+  el.className = 'token';
+  el.textContent = value;
+  el.dataset.type  = type;
+  el.dataset.value = value;
+  el.title = value;
+  el.addEventListener('pointerdown', onPointerDown);
+  return el;
+}
+
+// ── MAP ──
+function renderMap() {
+  const svg = d3.select('#map-svg');
+  svg.selectAll('*').remove();
+
+  d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json').then(us => {
+    const features = topojson.feature(us, us.objects.states).features;
+    const path = d3.geoPath();
+
+    features.forEach(f => {
+      const fips = String(f.id).padStart(2,'0');
+      answers[fips] = { name: null, capital: null };
+    });
+
+    const g = svg.append('g');
+
+    g.selectAll('.state-path')
+      .data(features)
+      .enter()
+      .append('path')
+      .attr('class', 'state-path hoverable')
+      .attr('d', path)
+      .attr('data-fips', d => String(d.id).padStart(2,'0'));
+
+    g.append('path')
+      .datum(topojson.mesh(us, us.objects.states, (a,b) => a !== b))
+      .attr('class', 'state-borders')
+      .attr('d', path);
+
+  }).catch(() => {
+    document.querySelector('.map-container').innerHTML =
+      '<p style="padding:24px;color:#c00;font-weight:700">Failed to load map. Please check your internet connection.</p>';
+  });
+}
+
+// ── DRAG ──
+function onPointerDown(e) {
+  const el = e.currentTarget;
+  if (el.classList.contains('used') || el.classList.contains('correct')) return;
+  if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+  e.preventDefault();
+
+  dragItem = { type: el.dataset.type, value: el.dataset.value, sourceEl: el };
+  ghost.textContent = el.dataset.value;
+  ghost.style.display = 'block';
+  moveGhost(e.clientX, e.clientY);
+  el.style.opacity = '0.35';
+
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup',   onPointerUp);
+  document.addEventListener('pointercancel', onPointerCancel);
+}
+
+function onPointerMove(e) {
+  if (!dragItem) return;
+  moveGhost(e.clientX, e.clientY);
+
+  ghost.style.visibility = 'hidden';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  ghost.style.visibility = '';
+
+  if (prevHoverEl && prevHoverEl !== under) {
+    prevHoverEl.classList.remove('drag-over');
+    prevHoverEl = null;
+    currentHoverFips = null;
+  }
+
+  if (under && under.classList.contains('state-path')) {
+    under.classList.add('drag-over');
+    currentHoverFips = under.dataset.fips;
+    prevHoverEl = under;
+  }
+}
+
+function onPointerUp(e) {
+  if (!dragItem) return;
+  ghost.style.display = 'none';
+  if (prevHoverEl) { prevHoverEl.classList.remove('drag-over'); prevHoverEl = null; }
+
+  if (currentHoverFips) {
+    handleDrop(currentHoverFips, dragItem.type, dragItem.value, dragItem.sourceEl);
+  } else {
+    dragItem.sourceEl.style.opacity = '';
+  }
+
+  cleanupDrag();
+}
+
+function onPointerCancel() {
+  if (dragItem) dragItem.sourceEl.style.opacity = '';
+  ghost.style.display = 'none';
+  if (prevHoverEl) { prevHoverEl.classList.remove('drag-over'); prevHoverEl = null; }
+  cleanupDrag();
+}
+
+function cleanupDrag() {
+  dragItem = null;
+  currentHoverFips = null;
+  document.removeEventListener('pointermove', onPointerMove);
+  document.removeEventListener('pointerup',   onPointerUp);
+  document.removeEventListener('pointercancel', onPointerCancel);
+}
+
+function moveGhost(x, y) {
+  ghost.style.left = x + 'px';
+  ghost.style.top  = y + 'px';
+}
+
+// ── HANDLE DROP ──
+function handleDrop(fips, type, value, sourceEl) {
+  const info = byFips[fips];
+  if (!info) { sourceEl.style.opacity = ''; return; }
+
+  if (gameMode === 'live') {
+    const correct = type === 'state' ? value === info.name : value === info.capital;
+    if (correct) {
+      answers[fips][type] = value;
+      sourceEl.classList.add('used', 'correct');
+      sourceEl.style.opacity = '';
+      updateStateFill(fips);
+      if (type === 'state') { scStates++;   document.getElementById('scoreStates').textContent   = scStates;   }
+      else                  { scCapitals++; document.getElementById('scoreCapitals').textContent = scCapitals; }
+      flashPath(fips, true);
+      showToast('✓ Correct!', 't-correct');
+      if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
+    } else {
+      sourceEl.style.opacity = '';
+      flashPath(fips, false);
+      showToast('✗ Not quite — try again!', 't-wrong');
+    }
+  } else {
+    // end mode — allow replacing
+    const prev = answers[fips][type];
+    if (prev !== null) {
+      // return old token
+      document.querySelectorAll('.token').forEach(t => {
+        if (t.dataset.type === type && t.dataset.value === prev) {
+          t.classList.remove('used');
+          t.style.opacity = '';
+        }
+      });
+    }
+    answers[fips][type] = value;
+    sourceEl.classList.add('used');
+    sourceEl.style.opacity = '';
+    updateStateFill(fips);
+  }
+}
+
+function updateStateFill(fips) {
+  const p = document.querySelector(`.state-path[data-fips="${fips}"]`);
+  if (!p) return;
+  p.classList.remove('name-placed','both-placed');
+  const a = answers[fips];
+  if (a.name && a.capital) p.classList.add('both-placed');
+  else if (a.name)         p.classList.add('name-placed');
+}
+
+function flashPath(fips, ok) {
+  const p = document.querySelector(`.state-path[data-fips="${fips}"]`);
+  if (!p) return;
+  const cls = ok ? 'flash-correct' : 'flash-wrong';
+  p.classList.add(cls);
+  setTimeout(() => {
+    p.classList.remove(cls);
+    if (ok) p.classList.add('correct');
+  }, 750);
+}
+
+// ── CHECK ANSWERS (end mode) ──
+function checkAnswers() {
+  let sc = 0, cc = 0;
+
+  Object.keys(answers).forEach(fips => {
+    const info = byFips[fips];
+    if (!info) return;
+    const a = answers[fips];
+    const nameOk = a.name    === info.name;
+    const capOk  = a.capital === info.capital;
+    if (nameOk) sc++;
+    if (capOk)  cc++;
+
+    const p = document.querySelector(`.state-path[data-fips="${fips}"]`);
+    if (p) {
+      p.classList.remove('name-placed','both-placed','correct','wrong');
+      if (a.name !== null || a.capital !== null) {
+        p.classList.add((nameOk && capOk) ? 'correct' : 'wrong');
+      }
+    }
+  });
+
+  // style tokens
+  document.querySelectorAll('.token').forEach(t => {
+    if (!t.classList.contains('used')) return;
+    const type  = t.dataset.type;
+    const val   = t.dataset.value;
+    const fips  = type === 'state' ? byName[val] : byCapital[val];
+    if (!fips) return;
+    const info  = byFips[fips];
+    const ok    = type === 'state' ? val === info.name : val === info.capital;
+    t.classList.add(ok ? 'correct' : 'wrong');
+  });
+
+  scStates   = sc;
+  scCapitals = cc;
+  document.getElementById('scoreStates').textContent   = sc;
+  document.getElementById('scoreCapitals').textContent = cc;
+  setTimeout(showEndModal, 600);
+}
+
+// ── END MODAL ──
+function showEndModal() {
+  const total = scStates + scCapitals;
+  const pct   = total / 100;
+  const trophy  = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🥈' : pct >= 0.5 ? '🥉' : '⭐';
+  const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing!';
+  const tagline = pct >= 0.9 ? 'You absolutely crushed it!' : pct >= 0.7 ? 'You\'re doing great!' : pct >= 0.5 ? 'More practice and you\'ll nail it!' : 'Every quiz makes you better!';
+
+  document.getElementById('endTrophy').textContent  = trophy;
+  document.getElementById('endTitle').textContent   = title;
+  document.getElementById('endTagline').textContent = tagline;
+  document.getElementById('endScoreBig').textContent = total;
+  document.getElementById('endStates').textContent   = scStates   + '/50';
+  document.getElementById('endCapitals').textContent = scCapitals + '/50';
+  document.getElementById('endModal').style.display  = 'flex';
+  launchConfetti();
+}
+
+// ── CONFETTI ──
+function launchConfetti() {
+  const colors = ['#007aaf','#58CC02','#FFC800','#FF4B4B','#4da6cc','#ff9600'];
+  for (let i = 0; i < 70; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.cssText = `
+      left: ${Math.random()*100}vw;
+      width: ${Math.random()*10+5}px;
+      height: ${Math.random()*10+5}px;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      border-radius: ${Math.random()>0.5?'50%':'3px'};
+      animation-delay: ${Math.random()*1.5}s;
+      animation-duration: ${Math.random()*2+2.5}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, cls) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = cls + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
