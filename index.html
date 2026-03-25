@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#007aaf">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Map Quiz">
-  <title>Rose's Map Quiz</title>
+  <meta name="apple-mobile-web-app-title" content="Oreo's Map Quest">
+  <title>Oreo's Map Quest</title>
   <link rel="manifest" href="manifest.json">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
@@ -73,8 +73,8 @@
       to   { transform: scale(1);    opacity: 1; }
     }
 
-    .start-emoji  { font-size: 72px; display: block; margin-bottom: 10px; }
-    .start-card h1 { font-size: 30px; font-weight: 900; color: var(--primary); margin-bottom: 6px; }
+    .start-logo { width: 160px; height: 160px; object-fit: contain; display: block; margin: 0 auto 6px; filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25)); }
+    .start-card h1 { font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 6px; }
     .start-subtitle { color: var(--text-light); font-size: 15px; font-weight: 600; margin-bottom: 32px; }
     .mode-label { font-size: 12px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px; }
 
@@ -399,8 +399,8 @@
 <!-- START MODAL -->
 <div id="startModal" class="modal-overlay">
   <div class="start-card">
-    <span class="start-emoji">🗺️</span>
-    <h1>Rose's Map Quiz</h1>
+    <img src="oreo-logo.png" alt="Oreo's Map Quest" class="start-logo">
+    <h1>Oreo's Map Quest</h1>
     <p class="start-subtitle">Drag state names & capitals onto the map!</p>
     <p class="mode-label">Pick your mode</p>
     <button class="mode-btn live" onclick="startGame('live')">
@@ -446,8 +446,8 @@
 <div id="app" style="display:none">
   <header class="header">
     <div class="header-brand">
-      <span class="b-icon">🗺️</span>
-      <h1>Rose's Map Quiz</h1>
+      <img src="oreo-logo.png" alt="Oreo" style="height:34px;width:34px;object-fit:contain;border-radius:50%;background:white;padding:1px;">
+      <h1>Oreo's Map Quest</h1>
     </div>
     <div class="header-scores">
       <div class="score-pill">📍 States <span class="s-num" id="scoreStates">0</span>/50</div>
@@ -817,8 +817,8 @@ function showEndModal() {
   const total = scStates + scCapitals;
   const pct   = total / 100;
   const trophy  = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🥈' : pct >= 0.5 ? '🥉' : '⭐';
-  const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing!';
-  const tagline = pct >= 0.9 ? 'You absolutely crushed it!' : pct >= 0.7 ? 'You\'re doing great!' : pct >= 0.5 ? 'More practice and you\'ll nail it!' : 'Every quiz makes you better!';
+  const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
+  const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? 'Oreo thinks you\'re paw-some!' : pct >= 0.5 ? 'More practice and you\'ll nail it!' : 'Every quiz makes you better!';
 
   document.getElementById('endTrophy').textContent  = trophy;
   document.getElementById('endTitle').textContent   = title;

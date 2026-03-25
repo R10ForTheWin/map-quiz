@@ -1,7 +1,7 @@
 {
-  "name": "Rose's Map Quiz",
-  "short_name": "Map Quiz",
-  "description": "Drag US state names and capitals onto the map!",
+  "name": "Oreo's Map Quest",
+  "short_name": "Map Quest",
+  "description": "Drag US state names and capitals onto the map with Oreo!",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#007aaf",
@@ -9,10 +9,16 @@
   "orientation": "landscape",
   "icons": [
     {
+      "src": "oreo-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }
