@@ -382,6 +382,35 @@
       overflow: hidden;
       position: relative;
     }
+    .map-controls {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      z-index: 20;
+    }
+    .mc-row { display: flex; gap: 3px; }
+    .mc-btn {
+      width: 30px; height: 30px;
+      border: 2px solid rgba(0,122,175,0.25);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(6px);
+      color: #007aaf;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none;
+      transition: background 0.1s, transform 0.1s;
+      line-height: 1;
+    }
+    .mc-btn:hover  { background: rgba(0,122,175,0.18); }
+    .mc-btn:active { background: rgba(0,122,175,0.35); transform: scale(0.93); }
+    .mc-spacer { width: 30px; height: 30px; }
 
     #map-svg {
       display: block;
@@ -711,6 +740,33 @@
         Loading map…
       </div>
       <svg id="map-svg" viewBox="0 0 975 610" preserveAspectRatio="xMidYMid meet" style="display:none"></svg>
+      <div class="map-controls" id="mapControls">
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="doMapZoom(1.5)" title="Zoom in">+</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="doMapPan(0,80)" title="Pan up">▲</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <button class="mc-btn" onclick="doMapPan(80,0)" title="Pan left">◀</button>
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="doMapPan(-80,0)" title="Pan right">▶</button>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="doMapPan(0,-80)" title="Pan down">▼</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="doMapZoom(0.67)" title="Zoom out">−</button>
+          <div class="mc-spacer"></div>
+        </div>
+      </div>
     </main>
     <aside class="word-bank capitals-bank">
       <div class="bank-header">🏛 Capitals</div>
@@ -869,10 +925,12 @@ let currentStreak = 0, longestStreak = 0;
 let dragItem = null;
 let prevHoverEl = null;
 let currentHoverFips = null;
-let mapFeatures  = null;
-let mapPathGen   = null;
-let mapG         = null;
-let mapLabelsG   = null;
+let mapFeatures      = null;
+let mapPathGen       = null;
+let mapG             = null;
+let mapLabelsG       = null;
+let mapWrapper       = null;
+let mapZoomBehavior  = null;
 const ghost = document.getElementById('drag-ghost');
 
 // ── START / RESET ──
@@ -904,7 +962,19 @@ function resetGame() {
   document.getElementById('endModal').style.display    = 'none';
   document.getElementById('abbr-screen').style.display = 'none';
   document.getElementById('startModal').style.display  = 'flex';
+  document.getElementById('mapControls').style.display = 'none';
+  if (mapZoomBehavior) d3.select('#map-svg').call(mapZoomBehavior.transform, d3.zoomIdentity);
   // map will be fully re-rendered on next startGame
+}
+
+function doMapZoom(factor) {
+  if (!mapZoomBehavior) return;
+  d3.select('#map-svg').transition().duration(220).call(mapZoomBehavior.scaleBy, factor);
+}
+
+function doMapPan(dx, dy) {
+  if (!mapZoomBehavior) return;
+  d3.select('#map-svg').transition().duration(180).call(mapZoomBehavior.translateBy, dx, dy);
 }
 
 // ── WORD BANKS ──
@@ -989,10 +1059,11 @@ function renderMap() {
 
     mapFeatures = features;
     mapPathGen  = path;
-    const g = svg.append('g');
-    mapG = g;
+    const wrapper = svg.append('g');
+    mapWrapper = wrapper;
+    mapG = wrapper.append('g');
 
-    g.selectAll('.state-path')
+    mapG.selectAll('.state-path')
       .data(features)
       .enter()
       .append('path')
@@ -1000,14 +1071,21 @@ function renderMap() {
       .attr('d', path)
       .attr('data-fips', d => String(d.id).padStart(2,'0'));
 
-    g.append('path')
+    mapG.append('path')
       .datum(topojson.mesh(us, us.objects.states, (a,b) => a !== b))
       .attr('class', 'state-borders')
       .attr('d', path);
 
     // Label layer sits above paths so text is always readable
-    mapLabelsG = svg.append('g');
+    mapLabelsG = wrapper.append('g');
     renderAllLabels(); // restore labels after re-render (e.g. resize)
+
+    // Zoom / pan behaviour
+    mapZoomBehavior = d3.zoom()
+      .scaleExtent([0.5, 8])
+      .on('zoom', (event) => { wrapper.attr('transform', event.transform); });
+    svg.call(mapZoomBehavior);
+    document.getElementById('mapControls').style.display = 'flex';
 
   }).catch(() => {
     document.querySelector('.map-container').innerHTML =
