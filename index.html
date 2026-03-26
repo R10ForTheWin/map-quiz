@@ -1608,15 +1608,24 @@ function submitAbbrAnswer() {
       btn.textContent = 'Next →';
       setTimeout(() => { abbrIdx++; showAbbrQuestion(); }, 2200);
     } else if (abbrCurrentWrong === 3) {
-      const hint = abbrMode === 'name-to-abbr'
-        ? `Starts with "${s.abbr[0]}" · in ${s.region} 🐾`
-        : `Starts with "${s.name[0]}" · in ${s.region} 🐾`;
-      showOreoMessage(hint);
+      if (abbrMode === 'name-to-abbr') {
+        // They see the state name — hint the second letter of the abbrev
+        showOreoMessage(`The abbreviation is ${s.abbr[0]}_ — what's the second letter? 🐾`);
+      } else {
+        // They see the abbrev — hint first letter + region
+        showOreoMessage(`Starts with "${s.name[0]}" · found in ${s.region} 🐾`);
+      }
       fb.textContent = "Not quite — check Oreo's hint!";
       fb.className = 'abbr-feedback wrong';
       setTimeout(() => { input.value = ''; input.classList.remove('wrong'); input.focus(); }, 400);
     } else if (abbrCurrentWrong === 2) {
-      showOreoMessage(`It's in ${s.region} 🐾`);
+      if (abbrMode === 'name-to-abbr') {
+        // They see the state name — hint the first letter of the abbrev
+        showOreoMessage(`The abbreviation starts with "${s.abbr[0]}" 🐾`);
+      } else {
+        // They see the abbrev — hint the region
+        showOreoMessage(`This state is found in ${s.region} 🐾`);
+      }
       fb.textContent = 'Try again!';
       fb.className = 'abbr-feedback wrong';
       setTimeout(() => { input.value = ''; input.classList.remove('wrong'); input.focus(); }, 400);
