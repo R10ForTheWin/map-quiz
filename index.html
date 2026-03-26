@@ -145,6 +145,8 @@
       gap: 5px;
     }
     .score-pill .s-num { font-size: 15px; font-weight: 900; }
+    .score-pill.streak-pill { background: rgba(255,200,0,0.22); border-color: rgba(255,200,0,0.6); }
+    .score-pill.streak-pill .s-num { color: #FFC800; }
 
     .btn-check {
       background: var(--gold);
@@ -161,6 +163,20 @@
     }
     .btn-check:hover  { transform: translateY(-1px); box-shadow: 0 5px 0 var(--gold-dark); }
     .btn-check:active { transform: translateY(2px);  box-shadow: 0 2px 0 var(--gold-dark); }
+
+    .btn-restart {
+      background: rgba(255,255,255,0.18);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-restart:hover { background: rgba(255,255,255,0.3); }
 
     /* ── GAME LAYOUT ── */
     .game-layout {
@@ -515,9 +531,12 @@
     <div class="header-scores">
       <div class="score-pill">📍 States <span class="s-num" id="scoreStates">0</span>/50</div>
       <div class="score-pill">🏛 Capitals <span class="s-num" id="scoreCapitals">0</span>/50</div>
+      <div class="score-pill streak-pill">🔥 <span class="s-num" id="streakCurrent">0</span></div>
+      <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="streakBest">0</span></div>
     </div>
-    <div>
+    <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn-check" id="checkBtn" onclick="checkAnswers()" style="display:none">Check Answers ✓</button>
+      <button class="btn-restart" onclick="resetGame()">↩ Start Over</button>
     </div>
   </header>
 
@@ -686,6 +705,7 @@ let answers      = {};
 let wrongCounts  = {};  // { 'fips-type': number }
 let hintingStates = {}; // { 'fips-type': true } — tracks active hints
 let scStates = 0, scCapitals = 0;
+let currentStreak = 0, longestStreak = 0;
 let dragItem = null;
 let prevHoverEl = null;
 let currentHoverFips = null;
@@ -708,8 +728,11 @@ function startGame(mode) {
   document.getElementById('startModal').style.display = 'none';
   document.getElementById('endModal').style.display   = 'none';
   document.getElementById('app').style.display        = 'flex';
-  document.getElementById('scoreStates').textContent   = '0';
-  document.getElementById('scoreCapitals').textContent = '0';
+  currentStreak = 0; longestStreak = 0;
+  document.getElementById('scoreStates').textContent    = '0';
+  document.getElementById('scoreCapitals').textContent  = '0';
+  document.getElementById('streakCurrent').textContent  = '0';
+  document.getElementById('streakBest').textContent     = '0';
   document.getElementById('checkBtn').style.display   = mode === 'end' ? 'block' : 'none';
 
   buildWordBanks();
@@ -920,11 +943,17 @@ function handleDrop(fips, type, value, sourceEl) {
       updateStateLabel(fips);
       if (type === 'state') { scStates++;   document.getElementById('scoreStates').textContent   = scStates;   }
       else                  { scCapitals++; document.getElementById('scoreCapitals').textContent = scCapitals; }
+      currentStreak++;
+      if (currentStreak > longestStreak) longestStreak = currentStreak;
+      document.getElementById('streakCurrent').textContent = currentStreak;
+      document.getElementById('streakBest').textContent    = longestStreak;
       flashPath(fips, true);
       showToast('✓ Correct!', 't-correct');
       if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
     } else {
       sourceEl.style.opacity = '';
+      currentStreak = 0;
+      document.getElementById('streakCurrent').textContent = 0;
       wrongCounts[value] = (wrongCounts[value] || 0) + 1;
       const tries = wrongCounts[value];
       const correctFips = type === 'state' ? byName[value] : byCapital[value];
