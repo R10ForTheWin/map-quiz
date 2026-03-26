@@ -76,7 +76,7 @@
       to   { transform: scale(1);    opacity: 1; }
     }
 
-    .start-logo { width: 160px; height: 160px; object-fit: contain; display: block; margin: 0 auto 6px; filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25)); }
+    .start-logo { width: 160px; height: 160px; object-fit: contain; display: block; margin: 0 auto 6px; filter: drop-shadow(0 6px 18px rgba(0,0,0,0.25)); mix-blend-mode: multiply; }
     .start-card h1 { font-size: 28px; font-weight: 900; color: var(--primary); margin-bottom: 6px; }
     .start-subtitle { color: var(--text-light); font-size: 15px; font-weight: 600; margin-bottom: 32px; }
     .mode-label { font-size: 12px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px; }
@@ -989,6 +989,7 @@ function handleDrop(fips, type, value, sourceEl) {
     sourceEl.classList.add('used');
     sourceEl.style.opacity = '';
     updateStateFill(fips);
+    updateStateLabel(fips);
   }
 }
 
@@ -1010,8 +1011,13 @@ function updateStateFill(fips) {
       p.style.fill = 'url(#stripe-orange)';             // capital only → orange stripes (inline style)
     }
   } else {
-    if (a.name && a.capital) p.classList.add('both-placed');
-    else if (a.name)         p.classList.add('name-placed');
+    if (a.name && a.capital) {
+      p.classList.add('both-placed');
+    } else if (a.name && !a.capital) {
+      p.style.fill = 'url(#stripe-blue)';
+    } else if (a.capital && !a.name) {
+      p.style.fill = 'url(#stripe-orange)';
+    }
   }
 }
 
@@ -1065,43 +1071,98 @@ function updateStateLabel(fips) {
   const bounds   = mapPathGen.bounds(feature);
   const bw = bounds[1][0] - bounds[0][0];
   const bh = bounds[1][1] - bounds[0][1];
-  const fs = Math.max(6, Math.min(11, Math.min(bw, bh) / 3));
   const hasBoth = a.name && a.capital;
 
-  if (a.name) {
-    mapLabelsG.append('text')
+  // Small states get a leader-line callout instead of inline text
+  const svgEl = mapLabelsG.node().ownerSVGElement;
+  const svgH  = svgEl ? svgEl.clientHeight : 610;
+  const isSmall = Math.min(bw, bh) < 30;
+
+  if (isSmall) {
+    const lfs = 9; // fixed readable font size for callout
+    // Place label box below the state (into ocean area); flip above if near bottom edge
+    const goDown = (cy + 70) < svgH - 30;
+    const lx = cx + 12;
+    const ly = goDown ? cy + 62 : cy - 62;
+
+    // Leader line from centroid edge to label
+    mapLabelsG.append('line')
       .attr('data-label', fips)
-      .attr('x', cx).attr('y', hasBoth ? cy - fs * 0.75 : cy)
-      .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-      .attr('font-family', 'Nunito, sans-serif').attr('font-size', fs)
-      .attr('font-weight', '900').attr('fill', '#003a5c')
-      .attr('stroke', 'white').attr('stroke-width', 2.5)
-      .attr('paint-order', 'stroke fill')
-      .attr('pointer-events', 'none').text(s.name);
+      .attr('x1', cx).attr('y1', goDown ? cy + 4 : cy - 4)
+      .attr('x2', lx - 2).attr('y2', ly)
+      .attr('stroke', '#90b8cc').attr('stroke-width', 1)
+      .attr('pointer-events', 'none');
+
+    // Dot at centroid anchor
+    mapLabelsG.append('circle')
+      .attr('data-label', fips)
+      .attr('cx', cx).attr('cy', cy).attr('r', 2.5)
+      .attr('fill', '#90b8cc').attr('pointer-events', 'none');
+
+    if (a.name) {
+      mapLabelsG.append('text')
+        .attr('data-label', fips)
+        .attr('x', lx).attr('y', hasBoth ? ly - 5.5 : ly)
+        .attr('text-anchor', 'start').attr('dominant-baseline', 'middle')
+        .attr('font-family', 'Nunito, sans-serif').attr('font-size', lfs)
+        .attr('font-weight', '900').attr('fill', '#003a5c')
+        .attr('stroke', 'white').attr('stroke-width', 2.5)
+        .attr('paint-order', 'stroke fill')
+        .attr('pointer-events', 'none').text(s.name);
+    }
+
+    if (a.capital) {
+      mapLabelsG.append('text')
+        .attr('data-label', fips)
+        .attr('x', lx).attr('y', hasBoth ? ly + 5.5 : ly)
+        .attr('text-anchor', 'start').attr('dominant-baseline', 'middle')
+        .attr('font-family', 'Nunito, sans-serif').attr('font-size', lfs - 1)
+        .attr('font-weight', '700').attr('fill', '#b86e00')
+        .attr('stroke', 'white').attr('stroke-width', 2)
+        .attr('paint-order', 'stroke fill')
+        .attr('pointer-events', 'none').text(s.capital);
+    }
+  } else {
+    const fs = Math.max(6, Math.min(11, Math.min(bw, bh) / 3));
+
+    if (a.name) {
+      mapLabelsG.append('text')
+        .attr('data-label', fips)
+        .attr('x', cx).attr('y', hasBoth ? cy - fs * 0.75 : cy)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', 'Nunito, sans-serif').attr('font-size', fs)
+        .attr('font-weight', '900').attr('fill', '#003a5c')
+        .attr('stroke', 'white').attr('stroke-width', 2.5)
+        .attr('paint-order', 'stroke fill')
+        .attr('pointer-events', 'none').text(s.name);
+    }
+
+    if (a.capital) {
+      mapLabelsG.append('text')
+        .attr('data-label', fips)
+        .attr('x', cx).attr('y', hasBoth ? cy + fs * 0.75 : cy)
+        .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+        .attr('font-family', 'Nunito, sans-serif').attr('font-size', Math.max(5, fs - 1))
+        .attr('font-weight', '700').attr('fill', '#b86e00')
+        .attr('stroke', 'white').attr('stroke-width', 2)
+        .attr('paint-order', 'stroke fill')
+        .attr('pointer-events', 'none').text(s.capital);
+    }
   }
 
+  // Capital star at actual coordinates (all states)
   if (a.capital) {
-    mapLabelsG.append('text')
-      .attr('data-label', fips)
-      .attr('x', cx).attr('y', hasBoth ? cy + fs * 0.75 : cy)
-      .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-      .attr('font-family', 'Nunito, sans-serif').attr('font-size', Math.max(5, fs - 1))
-      .attr('font-weight', '700').attr('fill', '#b86e00')
-      .attr('stroke', 'white').attr('stroke-width', 2)
-      .attr('paint-order', 'stroke fill')
-      .attr('pointer-events', 'none').text(s.capital);
-
-    // Star at actual capital coordinates
     const proj = mapPathGen.projection();
     const coords = CAP_COORDS[fips];
     if (proj && coords) {
       const pt = proj([coords[1], coords[0]]); // [lon, lat]
       if (pt) {
+        const starFs = isSmall ? 9 : Math.max(8, Math.min(11, Math.min(bw, bh) / 3) + 2);
         mapLabelsG.append('text')
           .attr('data-label', fips)
           .attr('x', pt[0]).attr('y', pt[1])
           .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-          .attr('font-size', Math.max(8, fs + 2))
+          .attr('font-size', starFs)
           .attr('fill', '#FFC800').attr('stroke', 'white').attr('stroke-width', 1.5)
           .attr('paint-order', 'stroke fill')
           .attr('pointer-events', 'none').text('★');
@@ -1156,6 +1217,7 @@ function checkAnswers() {
 
     const p = document.querySelector(`.state-path[data-fips="${fips}"]`);
     if (p) {
+      p.style.fill = '';
       p.classList.remove('name-placed','both-placed','correct','wrong');
       if (a.name !== null || a.capital !== null) {
         p.classList.add((nameOk && capOk) ? 'correct' : 'wrong');
