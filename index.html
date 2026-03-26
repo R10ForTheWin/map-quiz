@@ -285,35 +285,35 @@
     /* ── OREO HINT BUBBLE ── */
     #oreo-hint {
       position: fixed;
-      bottom: 24px;
-      left: 24px;
+      bottom: 28px;
+      left: 50%;
       display: flex;
       align-items: flex-end;
-      gap: 10px;
+      gap: 14px;
       z-index: 500;
-      transform: translateY(140px);
+      transform: translateX(-50%) translateY(200px);
       transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       pointer-events: none;
     }
-    #oreo-hint.show { transform: translateY(0); }
+    #oreo-hint.show { transform: translateX(-50%) translateY(0); }
     .oreo-hint-img {
-      width: 56px; height: 56px;
+      width: 80px; height: 80px;
       border-radius: 50%;
       border: 3px solid white;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
       flex-shrink: 0;
     }
     .oreo-bubble {
       background: white;
-      border-radius: 18px 18px 18px 4px;
-      padding: 11px 16px;
-      font-size: 14px;
+      border-radius: 20px 20px 20px 4px;
+      padding: 14px 20px;
+      font-size: 16px;
       font-weight: 800;
       color: var(--text);
-      box-shadow: 0 4px 18px rgba(0,0,0,0.2);
-      max-width: 230px;
-      border: 2px solid var(--border);
-      line-height: 1.35;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.28);
+      max-width: 320px;
+      border: 2.5px solid var(--border);
+      line-height: 1.4;
     }
 
     .state-borders {
@@ -595,6 +595,81 @@ const STATE_DATA = [
   { fips:'56', name:'Wyoming',        capital:'Cheyenne',      region:'the Mountain West'   },
 ];
 
+// ── ADJACENT STATES (for second hint) ──
+const ADJACENT = {
+  '01':['Florida','Georgia','Mississippi','Tennessee'],
+  '02':[],
+  '04':['California','Colorado','Nevada','New Mexico','Utah'],
+  '05':['Louisiana','Mississippi','Missouri','Oklahoma','Tennessee','Texas'],
+  '06':['Arizona','Nevada','Oregon'],
+  '08':['Arizona','Kansas','Nebraska','New Mexico','Oklahoma','Utah','Wyoming'],
+  '09':['Massachusetts','New York','Rhode Island'],
+  '10':['Maryland','New Jersey','Pennsylvania'],
+  '12':['Alabama','Georgia'],
+  '13':['Alabama','Florida','North Carolina','South Carolina','Tennessee'],
+  '15':[],
+  '16':['Montana','Nevada','Oregon','Utah','Washington','Wyoming'],
+  '17':['Indiana','Iowa','Kentucky','Missouri','Wisconsin'],
+  '18':['Illinois','Kentucky','Michigan','Ohio'],
+  '19':['Illinois','Minnesota','Missouri','Nebraska','South Dakota','Wisconsin'],
+  '20':['Colorado','Missouri','Nebraska','Oklahoma'],
+  '21':['Illinois','Indiana','Missouri','Ohio','Tennessee','Virginia','West Virginia'],
+  '22':['Arkansas','Mississippi','Texas'],
+  '23':['New Hampshire'],
+  '24':['Delaware','Pennsylvania','Virginia','West Virginia'],
+  '25':['Connecticut','New Hampshire','New York','Rhode Island','Vermont'],
+  '26':['Indiana','Ohio','Wisconsin'],
+  '27':['Iowa','North Dakota','South Dakota','Wisconsin'],
+  '28':['Alabama','Arkansas','Louisiana','Tennessee'],
+  '29':['Arkansas','Illinois','Iowa','Kansas','Kentucky','Nebraska','Oklahoma','Tennessee'],
+  '30':['Idaho','North Dakota','South Dakota','Wyoming'],
+  '31':['Colorado','Iowa','Kansas','Missouri','South Dakota','Wyoming'],
+  '32':['Arizona','California','Idaho','Oregon','Utah'],
+  '33':['Maine','Massachusetts','Vermont'],
+  '34':['Delaware','New York','Pennsylvania'],
+  '35':['Arizona','Colorado','Oklahoma','Texas','Utah'],
+  '36':['Connecticut','Massachusetts','New Jersey','Pennsylvania','Vermont'],
+  '37':['Georgia','South Carolina','Tennessee','Virginia'],
+  '38':['Minnesota','Montana','South Dakota'],
+  '39':['Indiana','Kentucky','Michigan','Pennsylvania','West Virginia'],
+  '40':['Arkansas','Colorado','Kansas','Missouri','New Mexico','Texas'],
+  '41':['California','Idaho','Nevada','Washington'],
+  '42':['Delaware','Maryland','New Jersey','New York','Ohio','West Virginia'],
+  '44':['Connecticut','Massachusetts'],
+  '45':['Georgia','North Carolina'],
+  '46':['Iowa','Minnesota','Montana','Nebraska','North Dakota','Wyoming'],
+  '47':['Alabama','Arkansas','Georgia','Kentucky','Mississippi','Missouri','North Carolina','Virginia'],
+  '48':['Arkansas','Louisiana','New Mexico','Oklahoma'],
+  '49':['Arizona','Colorado','Idaho','Nevada','New Mexico','Wyoming'],
+  '50':['Massachusetts','New Hampshire','New York'],
+  '51':['Kentucky','Maryland','North Carolina','Tennessee','West Virginia'],
+  '53':['Idaho','Oregon'],
+  '54':['Kentucky','Maryland','Ohio','Pennsylvania','Virginia'],
+  '55':['Illinois','Iowa','Michigan','Minnesota'],
+  '56':['Colorado','Idaho','Montana','Nebraska','South Dakota','Utah'],
+};
+
+// ── CAPITAL COORDINATES [lat, lon] ──
+const CAP_COORDS = {
+  '01':[32.361,-86.279],'02':[58.301,-134.419],'04':[33.448,-112.074],
+  '05':[34.736,-92.331],'06':[38.555,-121.468],'08':[39.731,-104.984],
+  '09':[41.764,-72.685],'10':[39.161,-75.527], '12':[30.438,-84.281],
+  '13':[33.749,-84.388],'15':[21.307,-157.858],'16':[43.614,-116.202],
+  '17':[39.798,-89.654],'18':[39.768,-86.158], '19':[41.591,-93.603],
+  '20':[39.049,-95.677],'21':[38.197,-84.860], '22':[30.458,-91.140],
+  '23':[44.323,-69.765],'24':[38.978,-76.490], '25':[42.358,-71.064],
+  '26':[42.732,-84.556],'27':[44.955,-93.102], '28':[32.298,-90.180],
+  '29':[38.572,-92.189],'30':[46.596,-112.027],'31':[40.808,-96.699],
+  '32':[39.164,-119.767],'33':[43.207,-71.538],'34':[40.221,-74.756],
+  '35':[35.687,-105.937],'36':[42.659,-73.781],'37':[35.771,-78.638],
+  '38':[46.813,-100.779],'39':[39.962,-83.003],'40':[35.482,-97.534],
+  '41':[44.931,-123.029],'42':[40.269,-76.883],'44':[41.823,-71.422],
+  '45':[34.000,-81.035], '46':[44.368,-100.336],'47':[36.165,-86.784],
+  '48':[30.267,-97.743], '49':[40.758,-111.891],'50':[44.260,-72.576],
+  '51':[37.541,-77.434], '53':[47.042,-122.893],'54':[38.349,-81.633],
+  '55':[43.075,-89.384], '56':[41.134,-104.802],
+};
+
 // quick lookups
 const byFips    = {};
 const byName    = {};
@@ -614,9 +689,10 @@ let scStates = 0, scCapitals = 0;
 let dragItem = null;
 let prevHoverEl = null;
 let currentHoverFips = null;
-let mapFeatures = null;
-let mapPathGen  = null;
-let mapG        = null;
+let mapFeatures  = null;
+let mapPathGen   = null;
+let mapG         = null;
+let mapLabelsG   = null;
 const ghost = document.getElementById('drag-ghost');
 
 // ── START / RESET ──
@@ -625,6 +701,7 @@ function startGame(mode) {
   answers       = {};
   wrongCounts   = {};
   hintingStates = {};
+  mapLabelsG    = null;
   scStates      = 0;
   scCapitals    = 0;
 
@@ -744,6 +821,10 @@ function renderMap() {
       .attr('class', 'state-borders')
       .attr('d', path);
 
+    // Label layer sits above paths so text is always readable
+    mapLabelsG = svg.append('g');
+    renderAllLabels(); // restore labels after re-render (e.g. resize)
+
   }).catch(() => {
     document.querySelector('.map-container').innerHTML =
       '<p style="padding:24px;color:#c00;font-weight:700">Failed to load map. Please check your internet connection.</p>';
@@ -831,11 +912,12 @@ function handleDrop(fips, type, value, sourceEl) {
   if (gameMode === 'live') {
     const correct = type === 'state' ? value === info.name : value === info.capital;
     if (correct) {
-      removeHint(fips, type); // clear any active hint for this answer
+      removeHint(fips, type);
       answers[fips][type === 'state' ? 'name' : 'capital'] = value;
       sourceEl.classList.add('used', 'correct');
       sourceEl.style.opacity = '';
       updateStateFill(fips);
+      updateStateLabel(fips);
       if (type === 'state') { scStates++;   document.getElementById('scoreStates').textContent   = scStates;   }
       else                  { scCapitals++; document.getElementById('scoreCapitals').textContent = scCapitals; }
       flashPath(fips, true);
@@ -843,14 +925,15 @@ function handleDrop(fips, type, value, sourceEl) {
       if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
     } else {
       sourceEl.style.opacity = '';
-      // Track wrong attempts by token value (not by destination state)
-      // so dragging "Alabama" onto 3 different wrong states counts as 3 tries
       wrongCounts[value] = (wrongCounts[value] || 0) + 1;
       const tries = wrongCounts[value];
       const correctFips = type === 'state' ? byName[value] : byCapital[value];
 
-      if (tries >= 5) {
+      if (tries >= 7) {
         autoReveal(correctFips, type);
+      } else if (tries >= 5) {
+        showAdjacentHint(correctFips);
+        flashPath(fips, false);
       } else if (tries >= 3) {
         showHint(correctFips, type, value);
         flashPath(fips, false);
@@ -923,7 +1006,82 @@ function showHint(fips, type, correctValue) {
 
 function removeHint(fips, type) {
   delete hintingStates[`${fips}-${type}`];
-  // updateStateFill will be called by the caller; hinting class will be re-evaluated
+}
+
+function showAdjacentHint(fips) {
+  const neighbors = ADJACENT[fips] || [];
+  if (neighbors.length === 0) {
+    showOreoMessage(`It's not connected to any other state! 🐾`);
+    return;
+  }
+  const list = neighbors.length === 1
+    ? neighbors[0]
+    : neighbors.slice(0, -1).join(', ') + ' & ' + neighbors[neighbors.length - 1];
+  showOreoMessage(`Still stuck? It borders ${list} 🐾`);
+}
+
+// ── STATE LABELS & CAPITAL STARS ──
+function updateStateLabel(fips) {
+  if (!mapLabelsG || !mapPathGen || !mapFeatures) return;
+  const s = byFips[fips];
+  if (!s) return;
+  const a = answers[fips];
+  const feature = mapFeatures.find(f => String(f.id).padStart(2,'0') === fips);
+  if (!feature) return;
+
+  mapLabelsG.selectAll(`[data-label="${fips}"]`).remove();
+  if (!a || (!a.name && !a.capital)) return;
+
+  const [cx, cy] = mapPathGen.centroid(feature);
+  const bounds   = mapPathGen.bounds(feature);
+  const bw = bounds[1][0] - bounds[0][0];
+  const bh = bounds[1][1] - bounds[0][1];
+  const fs = Math.max(6, Math.min(11, Math.min(bw, bh) / 3));
+  const hasBoth = a.name && a.capital;
+
+  if (a.name) {
+    mapLabelsG.append('text')
+      .attr('data-label', fips)
+      .attr('x', cx).attr('y', hasBoth ? cy - fs * 0.75 : cy)
+      .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+      .attr('font-family', 'Nunito, sans-serif').attr('font-size', fs)
+      .attr('font-weight', '900').attr('fill', 'white')
+      .attr('stroke', 'rgba(0,0,0,0.35)').attr('stroke-width', 0.6)
+      .attr('pointer-events', 'none').text(s.name);
+  }
+
+  if (a.capital) {
+    mapLabelsG.append('text')
+      .attr('data-label', fips)
+      .attr('x', cx).attr('y', hasBoth ? cy + fs * 0.75 : cy)
+      .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+      .attr('font-family', 'Nunito, sans-serif').attr('font-size', Math.max(5, fs - 1))
+      .attr('font-weight', '700').attr('fill', '#FFC800')
+      .attr('stroke', 'rgba(0,0,0,0.35)').attr('stroke-width', 0.6)
+      .attr('pointer-events', 'none').text(s.capital);
+
+    // Star at actual capital coordinates
+    const proj = mapPathGen.projection();
+    const coords = CAP_COORDS[fips];
+    if (proj && coords) {
+      const pt = proj([coords[1], coords[0]]); // [lon, lat]
+      if (pt) {
+        mapLabelsG.append('text')
+          .attr('data-label', fips)
+          .attr('x', pt[0]).attr('y', pt[1])
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
+          .attr('font-size', Math.max(8, fs + 2))
+          .attr('fill', '#FFC800').attr('stroke', 'rgba(0,0,0,0.4)').attr('stroke-width', 0.5)
+          .attr('pointer-events', 'none').text('★');
+      }
+    }
+  }
+}
+
+function renderAllLabels() {
+  if (!mapLabelsG) return;
+  mapLabelsG.selectAll('*').remove();
+  STATE_DATA.forEach(s => updateStateLabel(s.fips));
 }
 
 function autoReveal(fips, type) {
@@ -941,6 +1099,7 @@ function autoReveal(fips, type) {
   answers[fips][type === 'state' ? 'name' : 'capital'] = value;
   removeHint(fips, type);
   updateStateFill(fips);
+  updateStateLabel(fips);
 
   if (type === 'state') { scStates++;   document.getElementById('scoreStates').textContent   = scStates;   }
   else                  { scCapitals++; document.getElementById('scoreCapitals').textContent = scCapitals; }
