@@ -66,6 +66,8 @@
       padding: 44px 40px;
       max-width: 460px;
       width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
       text-align: center;
       box-shadow: 0 24px 64px rgba(0,0,0,0.35);
       animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -105,6 +107,99 @@
 
     .mode-btn.end { background: var(--primary-light); border-color: var(--primary); color: var(--primary-dark); }
     .mode-btn.end:hover { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 6px 0 var(--primary-dark); }
+
+    .mode-btn.abbr { background: #f3eeff; border-color: #8b5cf6; color: #4c1d95; }
+    .mode-btn.abbr:hover { background: #8b5cf6; color: white; transform: translateY(-2px); box-shadow: 0 6px 0 #6d28d9; }
+
+    .mode-divider {
+      font-size: 11px; font-weight: 900; color: var(--text-light);
+      text-transform: uppercase; letter-spacing: 1.2px;
+      margin: 8px 0 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .mode-divider::before, .mode-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── ABBR QUIZ SCREEN ── */
+    #abbr-screen {
+      display: none; flex-direction: column;
+      height: 100vh; height: 100dvh;
+      overflow: hidden;
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--bg);
+    }
+    .abbr-body {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 28px 20px; gap: 20px;
+    }
+    .abbr-progress-row {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; max-width: 480px;
+    }
+    .abbr-prog-track {
+      flex: 1; height: 10px; background: var(--border);
+      border-radius: 8px; overflow: hidden;
+    }
+    .abbr-prog-fill {
+      height: 100%; background: #8b5cf6;
+      border-radius: 8px; transition: width 0.35s ease; width: 0%;
+    }
+    .abbr-prog-label { font-size: 13px; font-weight: 900; color: var(--text-light); white-space: nowrap; }
+
+    .abbr-card {
+      background: white; border-radius: var(--radius);
+      box-shadow: 0 8px 32px rgba(0,80,120,0.12);
+      padding: 40px 48px 28px;
+      text-align: center; width: 100%; max-width: 480px;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-10px); }
+      40%     { transform: translateX(10px); }
+      60%     { transform: translateX(-8px); }
+      80%     { transform: translateX(8px); }
+    }
+    .abbr-card.shake { animation: shake 0.4s ease; }
+
+    .abbr-prompt-label {
+      font-size: 11px; font-weight: 900; color: var(--text-light);
+      text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px;
+    }
+    .abbr-prompt {
+      font-size: 36px; font-weight: 900; color: var(--primary-dark);
+      margin-bottom: 28px; line-height: 1.15;
+    }
+    .abbr-prompt.big { font-size: 56px; letter-spacing: 5px; }
+
+    .abbr-input-row {
+      display: flex; gap: 10px; align-items: center;
+      justify-content: center; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .abbr-input {
+      border: 3px solid var(--border); border-radius: var(--radius-sm);
+      font-family: 'Nunito', sans-serif; font-size: 22px; font-weight: 900;
+      text-align: center; outline: none; padding: 10px 12px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .abbr-input:focus { border-color: #8b5cf6; }
+    .abbr-input.abbr-short { width: 92px; font-size: 28px; letter-spacing: 4px; text-transform: uppercase; }
+    .abbr-input.abbr-long  { width: 260px; font-size: 18px; text-align: left; }
+    .abbr-input.correct { border-color: var(--correct); background: var(--correct-light); }
+    .abbr-input.wrong   { border-color: var(--wrong); background: var(--wrong-light); }
+
+    .abbr-btn {
+      background: #8b5cf6; color: white; border: none;
+      border-radius: var(--radius-sm); padding: 12px 22px;
+      font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900;
+      cursor: pointer; box-shadow: 0 4px 0 #6d28d9; transition: all 0.1s; flex-shrink: 0;
+    }
+    .abbr-btn:hover  { transform: translateY(-1px); box-shadow: 0 5px 0 #6d28d9; }
+    .abbr-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #6d28d9; }
+
+    .abbr-feedback { min-height: 22px; font-size: 14px; font-weight: 800; color: transparent; }
+    .abbr-feedback.correct { color: var(--correct); }
+    .abbr-feedback.wrong   { color: var(--wrong); }
 
     /* ── MAIN APP ── */
     #app {
@@ -496,6 +591,21 @@
         <span class="m-desc">Place everything first, then check your score</span>
       </span>
     </button>
+    <p class="mode-divider">Flashcards</p>
+    <button class="mode-btn abbr" onclick="startAbbrGame('name-to-abbr')">
+      <span class="m-icon">🔤</span>
+      <span class="m-text">
+        <span class="m-title">Name → Abbreviation</span>
+        <span class="m-desc">See a state name, type its 2-letter code</span>
+      </span>
+    </button>
+    <button class="mode-btn abbr" onclick="startAbbrGame('abbr-to-name')">
+      <span class="m-icon">🗺️</span>
+      <span class="m-text">
+        <span class="m-title">Abbreviation → Name</span>
+        <span class="m-desc">See a 2-letter code, type the full state name</span>
+      </span>
+    </button>
   </div>
 </div>
 
@@ -509,15 +619,48 @@
     <div class="end-score-sub">out of 100 points</div>
     <div class="end-breakdown">
       <div class="bd-item">
-        <div class="bd-label">States</div>
+        <div class="bd-label" id="endLabel1">States</div>
         <div class="bd-value" id="endStates">50/50</div>
       </div>
       <div class="bd-item">
-        <div class="bd-label">Capitals</div>
+        <div class="bd-label" id="endLabel2">Capitals</div>
         <div class="bd-value" id="endCapitals">50/50</div>
       </div>
     </div>
     <button class="btn-replay" onclick="resetGame()">Play Again! 🎉</button>
+  </div>
+</div>
+
+<!-- ABBR QUIZ SCREEN -->
+<div id="abbr-screen">
+  <header class="header">
+    <div class="header-brand">
+      <img src="oreo-logo.png" alt="Oreo" style="height:34px;width:34px;object-fit:contain;border-radius:50%;background:white;padding:1px;">
+      <h1 id="abbrModeLabel">Abbreviations</h1>
+    </div>
+    <div class="header-scores">
+      <div class="score-pill">✓ <span class="s-num" id="abbrScoreCorrect">0</span>/50</div>
+      <div class="score-pill streak-pill">🔥 Streak <span class="s-num" id="abbrStreakCurrent">0</span></div>
+      <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="abbrStreakBest">0</span></div>
+    </div>
+    <button class="btn-restart" onclick="exitAbbrGame()">↩ Home</button>
+  </header>
+  <div class="abbr-body">
+    <div class="abbr-progress-row">
+      <div class="abbr-prog-track"><div class="abbr-prog-fill" id="abbrProgressFill"></div></div>
+      <span class="abbr-prog-label" id="abbrProgressText">1 / 50</span>
+    </div>
+    <div class="abbr-card" id="abbrCard">
+      <div class="abbr-prompt-label" id="abbrPromptLabel">What's the abbreviation?</div>
+      <div class="abbr-prompt" id="abbrPrompt">California</div>
+      <div class="abbr-input-row">
+        <input class="abbr-input abbr-short" id="abbrInput" type="text"
+               autocomplete="off" autocorrect="off" autocapitalize="characters"
+               spellcheck="false" placeholder="??" />
+        <button class="abbr-btn" id="abbrSubmitBtn" onclick="submitAbbrAnswer()">Check ✓</button>
+      </div>
+      <div class="abbr-feedback" id="abbrFeedback"></div>
+    </div>
   </div>
 </div>
 
@@ -562,56 +705,56 @@
 <script>
 // ── STATE DATA ──
 const STATE_DATA = [
-  { fips:'01', name:'Alabama',        capital:'Montgomery',    region:'the Southeast'       },
-  { fips:'02', name:'Alaska',         capital:'Juneau',        region:'the Far North'       },
-  { fips:'04', name:'Arizona',        capital:'Phoenix',       region:'the Southwest'       },
-  { fips:'05', name:'Arkansas',       capital:'Little Rock',   region:'the South'           },
-  { fips:'06', name:'California',     capital:'Sacramento',    region:'the West Coast'      },
-  { fips:'08', name:'Colorado',       capital:'Denver',        region:'the Mountain West'   },
-  { fips:'09', name:'Connecticut',    capital:'Hartford',      region:'the Northeast'       },
-  { fips:'10', name:'Delaware',       capital:'Dover',         region:'the Northeast'       },
-  { fips:'12', name:'Florida',        capital:'Tallahassee',   region:'the Southeast'       },
-  { fips:'13', name:'Georgia',        capital:'Atlanta',       region:'the Southeast'       },
-  { fips:'15', name:'Hawaii',         capital:'Honolulu',      region:'the Pacific'         },
-  { fips:'16', name:'Idaho',          capital:'Boise',         region:'the Mountain West'   },
-  { fips:'17', name:'Illinois',       capital:'Springfield',   region:'the Midwest'         },
-  { fips:'18', name:'Indiana',        capital:'Indianapolis',  region:'the Midwest'         },
-  { fips:'19', name:'Iowa',           capital:'Des Moines',    region:'the Midwest'         },
-  { fips:'20', name:'Kansas',         capital:'Topeka',        region:'the Midwest'         },
-  { fips:'21', name:'Kentucky',       capital:'Frankfort',     region:'the Southeast'       },
-  { fips:'22', name:'Louisiana',      capital:'Baton Rouge',   region:'the South'           },
-  { fips:'23', name:'Maine',          capital:'Augusta',       region:'the Northeast'       },
-  { fips:'24', name:'Maryland',       capital:'Annapolis',     region:'the Northeast'       },
-  { fips:'25', name:'Massachusetts',  capital:'Boston',        region:'the Northeast'       },
-  { fips:'26', name:'Michigan',       capital:'Lansing',       region:'the Midwest'         },
-  { fips:'27', name:'Minnesota',      capital:'Saint Paul',    region:'the Midwest'         },
-  { fips:'28', name:'Mississippi',    capital:'Jackson',       region:'the Southeast'       },
-  { fips:'29', name:'Missouri',       capital:'Jefferson City',region:'the Midwest'         },
-  { fips:'30', name:'Montana',        capital:'Helena',        region:'the Mountain West'   },
-  { fips:'31', name:'Nebraska',       capital:'Lincoln',       region:'the Midwest'         },
-  { fips:'32', name:'Nevada',         capital:'Carson City',   region:'the Mountain West'   },
-  { fips:'33', name:'New Hampshire',  capital:'Concord',       region:'the Northeast'       },
-  { fips:'34', name:'New Jersey',     capital:'Trenton',       region:'the Northeast'       },
-  { fips:'35', name:'New Mexico',     capital:'Santa Fe',      region:'the Southwest'       },
-  { fips:'36', name:'New York',       capital:'Albany',        region:'the Northeast'       },
-  { fips:'37', name:'North Carolina', capital:'Raleigh',       region:'the Southeast'       },
-  { fips:'38', name:'North Dakota',   capital:'Bismarck',      region:'the Midwest'         },
-  { fips:'39', name:'Ohio',           capital:'Columbus',      region:'the Midwest'         },
-  { fips:'40', name:'Oklahoma',       capital:'Oklahoma City', region:'the South'           },
-  { fips:'41', name:'Oregon',         capital:'Salem',         region:'the Pacific Northwest'},
-  { fips:'42', name:'Pennsylvania',   capital:'Harrisburg',    region:'the Northeast'       },
-  { fips:'44', name:'Rhode Island',   capital:'Providence',    region:'the Northeast'       },
-  { fips:'45', name:'South Carolina', capital:'Columbia',      region:'the Southeast'       },
-  { fips:'46', name:'South Dakota',   capital:'Pierre',        region:'the Midwest'         },
-  { fips:'47', name:'Tennessee',      capital:'Nashville',     region:'the Southeast'       },
-  { fips:'48', name:'Texas',          capital:'Austin',        region:'the South'           },
-  { fips:'49', name:'Utah',           capital:'Salt Lake City',region:'the Mountain West'   },
-  { fips:'50', name:'Vermont',        capital:'Montpelier',    region:'the Northeast'       },
-  { fips:'51', name:'Virginia',       capital:'Richmond',      region:'the Southeast'       },
-  { fips:'53', name:'Washington',     capital:'Olympia',       region:'the Pacific Northwest'},
-  { fips:'54', name:'West Virginia',  capital:'Charleston',    region:'the Southeast'       },
-  { fips:'55', name:'Wisconsin',      capital:'Madison',       region:'the Midwest'         },
-  { fips:'56', name:'Wyoming',        capital:'Cheyenne',      region:'the Mountain West'   },
+  { fips:'01', name:'Alabama',        abbr:'AL', capital:'Montgomery',    region:'the Southeast'        },
+  { fips:'02', name:'Alaska',         abbr:'AK', capital:'Juneau',        region:'the Far North'        },
+  { fips:'04', name:'Arizona',        abbr:'AZ', capital:'Phoenix',       region:'the Southwest'        },
+  { fips:'05', name:'Arkansas',       abbr:'AR', capital:'Little Rock',   region:'the South'            },
+  { fips:'06', name:'California',     abbr:'CA', capital:'Sacramento',    region:'the West Coast'       },
+  { fips:'08', name:'Colorado',       abbr:'CO', capital:'Denver',        region:'the Mountain West'    },
+  { fips:'09', name:'Connecticut',    abbr:'CT', capital:'Hartford',      region:'the Northeast'        },
+  { fips:'10', name:'Delaware',       abbr:'DE', capital:'Dover',         region:'the Northeast'        },
+  { fips:'12', name:'Florida',        abbr:'FL', capital:'Tallahassee',   region:'the Southeast'        },
+  { fips:'13', name:'Georgia',        abbr:'GA', capital:'Atlanta',       region:'the Southeast'        },
+  { fips:'15', name:'Hawaii',         abbr:'HI', capital:'Honolulu',      region:'the Pacific'          },
+  { fips:'16', name:'Idaho',          abbr:'ID', capital:'Boise',         region:'the Mountain West'    },
+  { fips:'17', name:'Illinois',       abbr:'IL', capital:'Springfield',   region:'the Midwest'          },
+  { fips:'18', name:'Indiana',        abbr:'IN', capital:'Indianapolis',  region:'the Midwest'          },
+  { fips:'19', name:'Iowa',           abbr:'IA', capital:'Des Moines',    region:'the Midwest'          },
+  { fips:'20', name:'Kansas',         abbr:'KS', capital:'Topeka',        region:'the Midwest'          },
+  { fips:'21', name:'Kentucky',       abbr:'KY', capital:'Frankfort',     region:'the Southeast'        },
+  { fips:'22', name:'Louisiana',      abbr:'LA', capital:'Baton Rouge',   region:'the South'            },
+  { fips:'23', name:'Maine',          abbr:'ME', capital:'Augusta',       region:'the Northeast'        },
+  { fips:'24', name:'Maryland',       abbr:'MD', capital:'Annapolis',     region:'the Northeast'        },
+  { fips:'25', name:'Massachusetts',  abbr:'MA', capital:'Boston',        region:'the Northeast'        },
+  { fips:'26', name:'Michigan',       abbr:'MI', capital:'Lansing',       region:'the Midwest'          },
+  { fips:'27', name:'Minnesota',      abbr:'MN', capital:'Saint Paul',    region:'the Midwest'          },
+  { fips:'28', name:'Mississippi',    abbr:'MS', capital:'Jackson',       region:'the Southeast'        },
+  { fips:'29', name:'Missouri',       abbr:'MO', capital:'Jefferson City',region:'the Midwest'          },
+  { fips:'30', name:'Montana',        abbr:'MT', capital:'Helena',        region:'the Mountain West'    },
+  { fips:'31', name:'Nebraska',       abbr:'NE', capital:'Lincoln',       region:'the Midwest'          },
+  { fips:'32', name:'Nevada',         abbr:'NV', capital:'Carson City',   region:'the Mountain West'    },
+  { fips:'33', name:'New Hampshire',  abbr:'NH', capital:'Concord',       region:'the Northeast'        },
+  { fips:'34', name:'New Jersey',     abbr:'NJ', capital:'Trenton',       region:'the Northeast'        },
+  { fips:'35', name:'New Mexico',     abbr:'NM', capital:'Santa Fe',      region:'the Southwest'        },
+  { fips:'36', name:'New York',       abbr:'NY', capital:'Albany',        region:'the Northeast'        },
+  { fips:'37', name:'North Carolina', abbr:'NC', capital:'Raleigh',       region:'the Southeast'        },
+  { fips:'38', name:'North Dakota',   abbr:'ND', capital:'Bismarck',      region:'the Midwest'          },
+  { fips:'39', name:'Ohio',           abbr:'OH', capital:'Columbus',      region:'the Midwest'          },
+  { fips:'40', name:'Oklahoma',       abbr:'OK', capital:'Oklahoma City', region:'the South'            },
+  { fips:'41', name:'Oregon',         abbr:'OR', capital:'Salem',         region:'the Pacific Northwest' },
+  { fips:'42', name:'Pennsylvania',   abbr:'PA', capital:'Harrisburg',    region:'the Northeast'        },
+  { fips:'44', name:'Rhode Island',   abbr:'RI', capital:'Providence',    region:'the Northeast'        },
+  { fips:'45', name:'South Carolina', abbr:'SC', capital:'Columbia',      region:'the Southeast'        },
+  { fips:'46', name:'South Dakota',   abbr:'SD', capital:'Pierre',        region:'the Midwest'          },
+  { fips:'47', name:'Tennessee',      abbr:'TN', capital:'Nashville',     region:'the Southeast'        },
+  { fips:'48', name:'Texas',          abbr:'TX', capital:'Austin',        region:'the South'            },
+  { fips:'49', name:'Utah',           abbr:'UT', capital:'Salt Lake City',region:'the Mountain West'    },
+  { fips:'50', name:'Vermont',        abbr:'VT', capital:'Montpelier',    region:'the Northeast'        },
+  { fips:'51', name:'Virginia',       abbr:'VA', capital:'Richmond',      region:'the Southeast'        },
+  { fips:'53', name:'Washington',     abbr:'WA', capital:'Olympia',       region:'the Pacific Northwest' },
+  { fips:'54', name:'West Virginia',  abbr:'WV', capital:'Charleston',    region:'the Southeast'        },
+  { fips:'55', name:'Wisconsin',      abbr:'WI', capital:'Madison',       region:'the Midwest'          },
+  { fips:'56', name:'Wyoming',        abbr:'WY', capital:'Cheyenne',      region:'the Mountain West'    },
 ];
 
 // ── ADJACENT STATES (for second hint) ──
@@ -741,8 +884,9 @@ function startGame(mode) {
 }
 
 function resetGame() {
-  document.getElementById('endModal').style.display   = 'none';
-  document.getElementById('startModal').style.display = 'flex';
+  document.getElementById('endModal').style.display    = 'none';
+  document.getElementById('abbr-screen').style.display = 'none';
+  document.getElementById('startModal').style.display  = 'flex';
   // map will be fully re-rendered on next startGame
 }
 
@@ -1306,6 +1450,173 @@ function showToast(msg, cls) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
+
+// ── ABBREVIATION QUIZ ──
+let abbrMode = null, abbrQueue = [], abbrIdx = 0;
+let abbrCorrect = 0, abbrCurrentWrong = 0;
+let abbrStreak = 0, abbrBestStreak = 0;
+let abbrRevealed = false;
+
+function startAbbrGame(direction) {
+  abbrMode = direction;
+  abbrQueue = [...STATE_DATA].sort(() => Math.random() - 0.5);
+  abbrIdx = 0; abbrCorrect = 0;
+  abbrStreak = 0; abbrBestStreak = 0;
+
+  document.getElementById('startModal').style.display  = 'none';
+  document.getElementById('abbr-screen').style.display = 'flex';
+  document.getElementById('abbrModeLabel').textContent =
+    direction === 'name-to-abbr' ? 'Name → Abbrev' : 'Abbrev → Name';
+
+  updateAbbrStats();
+  showAbbrQuestion();
+}
+
+function showAbbrQuestion() {
+  if (abbrIdx >= abbrQueue.length) { showAbbrEnd(); return; }
+  const s = abbrQueue[abbrIdx];
+  abbrCurrentWrong = 0;
+  abbrRevealed = false;
+
+  const input = document.getElementById('abbrInput');
+  input.value = '';
+  input.className = 'abbr-input';
+  input.disabled = false;
+
+  const prompt = document.getElementById('abbrPrompt');
+  const label  = document.getElementById('abbrPromptLabel');
+
+  if (abbrMode === 'name-to-abbr') {
+    label.textContent = "What's the abbreviation?";
+    prompt.textContent = s.name;
+    prompt.classList.remove('big');
+    input.maxLength = 2;
+    input.placeholder = '??';
+    input.classList.add('abbr-short');
+  } else {
+    label.textContent = 'What state is this?';
+    prompt.textContent = s.abbr;
+    prompt.classList.add('big');
+    input.maxLength = 50;
+    input.placeholder = 'State name…';
+    input.classList.add('abbr-long');
+  }
+
+  const fb = document.getElementById('abbrFeedback');
+  fb.textContent = '';
+  fb.className = 'abbr-feedback';
+
+  const btn = document.getElementById('abbrSubmitBtn');
+  btn.textContent = 'Check ✓';
+
+  document.getElementById('abbrProgressText').textContent = `${abbrIdx + 1} / 50`;
+  document.getElementById('abbrProgressFill').style.width = `${(abbrIdx / 50) * 100}%`;
+
+  setTimeout(() => input.focus(), 50);
+}
+
+function submitAbbrAnswer() {
+  if (abbrRevealed) { abbrIdx++; showAbbrQuestion(); return; }
+
+  const s     = abbrQueue[abbrIdx];
+  const input = document.getElementById('abbrInput');
+  const fb    = document.getElementById('abbrFeedback');
+  const btn   = document.getElementById('abbrSubmitBtn');
+  const val   = input.value.trim();
+  if (!val) return;
+
+  const isCorrect = abbrMode === 'name-to-abbr'
+    ? val.toUpperCase() === s.abbr
+    : val.toLowerCase() === s.name.toLowerCase();
+
+  if (isCorrect) {
+    input.classList.add('correct');
+    fb.textContent = '✓ Correct!';
+    fb.className = 'abbr-feedback correct';
+    btn.textContent = 'Next →';
+    abbrRevealed = true;
+    abbrCorrect++;
+    abbrStreak++;
+    if (abbrStreak > abbrBestStreak) abbrBestStreak = abbrStreak;
+    updateAbbrStats();
+    setTimeout(() => { abbrIdx++; showAbbrQuestion(); }, 900);
+  } else {
+    input.classList.add('wrong');
+    abbrCurrentWrong++;
+    abbrStreak = 0;
+    updateAbbrStats();
+
+    const card = document.getElementById('abbrCard');
+    card.classList.remove('shake');
+    void card.offsetWidth; // force reflow so re-adding shake restarts animation
+    card.classList.add('shake');
+
+    const answer = abbrMode === 'name-to-abbr' ? s.abbr : s.name;
+
+    if (abbrCurrentWrong >= 4) {
+      showOreoMessage(`It's "${answer}"! 🐾`);
+      fb.textContent = `The answer is: ${answer}`;
+      fb.className = 'abbr-feedback wrong';
+      input.value = answer;
+      input.classList.remove('wrong');
+      input.classList.add('correct');
+      abbrRevealed = true;
+      btn.textContent = 'Next →';
+      setTimeout(() => { abbrIdx++; showAbbrQuestion(); }, 2200);
+    } else if (abbrCurrentWrong === 3) {
+      const hint = abbrMode === 'name-to-abbr'
+        ? `Starts with "${s.abbr[0]}" · in ${s.region} 🐾`
+        : `Starts with "${s.name[0]}" · in ${s.region} 🐾`;
+      showOreoMessage(hint);
+      fb.textContent = "Not quite — check Oreo's hint!";
+      fb.className = 'abbr-feedback wrong';
+      setTimeout(() => { input.value = ''; input.classList.remove('wrong'); input.focus(); }, 400);
+    } else if (abbrCurrentWrong === 2) {
+      showOreoMessage(`It's in ${s.region} 🐾`);
+      fb.textContent = 'Try again!';
+      fb.className = 'abbr-feedback wrong';
+      setTimeout(() => { input.value = ''; input.classList.remove('wrong'); input.focus(); }, 400);
+    } else {
+      fb.textContent = 'Not quite — try again!';
+      fb.className = 'abbr-feedback wrong';
+      setTimeout(() => { input.value = ''; input.classList.remove('wrong'); input.focus(); }, 400);
+    }
+  }
+}
+
+function updateAbbrStats() {
+  document.getElementById('abbrScoreCorrect').textContent  = abbrCorrect;
+  document.getElementById('abbrStreakCurrent').textContent = abbrStreak;
+  document.getElementById('abbrStreakBest').textContent    = abbrBestStreak;
+}
+
+function exitAbbrGame() {
+  document.getElementById('abbr-screen').style.display = 'none';
+  document.getElementById('startModal').style.display  = 'flex';
+}
+
+function showAbbrEnd() {
+  const pct     = abbrCorrect / 50;
+  const trophy  = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🥈' : pct >= 0.5 ? '🥉' : '⭐';
+  const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
+  const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? "Oreo thinks you're paw-some!" : pct >= 0.5 ? "More practice and you'll nail it!" : 'Every quiz makes you better!';
+
+  document.getElementById('endTrophy').textContent    = trophy;
+  document.getElementById('endTitle').textContent     = title;
+  document.getElementById('endTagline').textContent   = tagline;
+  document.getElementById('endScoreBig').textContent  = abbrCorrect * 2;
+  document.getElementById('endLabel1').textContent    = 'Correct';
+  document.getElementById('endLabel2').textContent    = 'Best Streak';
+  document.getElementById('endStates').textContent    = `${abbrCorrect}/50`;
+  document.getElementById('endCapitals').textContent  = abbrBestStreak;
+  document.getElementById('endModal').style.display   = 'flex';
+  launchConfetti();
+}
+
+// Enter key submits abbr answer
+document.getElementById('abbrInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitAbbrAnswer();
+});
 
 // ── RESIZE ──
 window.addEventListener('resize', () => {
