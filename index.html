@@ -593,7 +593,6 @@
 <div id="startModal" class="modal-overlay">
   <div class="start-card">
     <img src="oreo-logo.png" alt="Oreo's Map Quest" class="start-logo">
-    <p class="start-subtitle">Two study guides to help you ace your test!</p>
     <p class="start-device-note">💻 Best experienced on a laptop or desktop — the map needs a full screen to shine!</p>
 
     <div class="study-guide-header map-header">Study Guide 1: Name the State &amp; Capital</div>
@@ -1564,7 +1563,7 @@ function showAbbrQuestion() {
 
   // State flag
   const flagEl = document.getElementById('abbrFlag');
-  flagEl.src = `https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/flags/4x3/us-${s.abbr.toLowerCase()}.svg`;
+  flagEl.src = `https://flagcdn.com/us-${s.abbr.toLowerCase()}.svg`;
   flagEl.alt = `Flag of ${s.name}`;
   flagEl.style.display = 'block';
   flagEl.onerror = () => { flagEl.style.display = 'none'; };
