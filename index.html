@@ -531,7 +531,7 @@
     <div class="header-scores">
       <div class="score-pill">📍 States <span class="s-num" id="scoreStates">0</span>/50</div>
       <div class="score-pill">🏛 Capitals <span class="s-num" id="scoreCapitals">0</span>/50</div>
-      <div class="score-pill streak-pill">🔥 <span class="s-num" id="streakCurrent">0</span></div>
+      <div class="score-pill streak-pill">🔥 Streak <span class="s-num" id="streakCurrent">0</span></div>
       <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="streakBest">0</span></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
@@ -1074,8 +1074,9 @@ function updateStateLabel(fips) {
       .attr('x', cx).attr('y', hasBoth ? cy - fs * 0.75 : cy)
       .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
       .attr('font-family', 'Nunito, sans-serif').attr('font-size', fs)
-      .attr('font-weight', '900').attr('fill', 'white')
-      .attr('stroke', 'rgba(0,0,0,0.35)').attr('stroke-width', 0.6)
+      .attr('font-weight', '900').attr('fill', '#003a5c')
+      .attr('stroke', 'white').attr('stroke-width', 2.5)
+      .attr('paint-order', 'stroke fill')
       .attr('pointer-events', 'none').text(s.name);
   }
 
@@ -1085,8 +1086,9 @@ function updateStateLabel(fips) {
       .attr('x', cx).attr('y', hasBoth ? cy + fs * 0.75 : cy)
       .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
       .attr('font-family', 'Nunito, sans-serif').attr('font-size', Math.max(5, fs - 1))
-      .attr('font-weight', '700').attr('fill', '#FFC800')
-      .attr('stroke', 'rgba(0,0,0,0.35)').attr('stroke-width', 0.6)
+      .attr('font-weight', '700').attr('fill', '#b86e00')
+      .attr('stroke', 'white').attr('stroke-width', 2)
+      .attr('paint-order', 'stroke fill')
       .attr('pointer-events', 'none').text(s.capital);
 
     // Star at actual capital coordinates
@@ -1100,7 +1102,8 @@ function updateStateLabel(fips) {
           .attr('x', pt[0]).attr('y', pt[1])
           .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
           .attr('font-size', Math.max(8, fs + 2))
-          .attr('fill', '#FFC800').attr('stroke', 'rgba(0,0,0,0.4)').attr('stroke-width', 0.5)
+          .attr('fill', '#FFC800').attr('stroke', 'white').attr('stroke-width', 1.5)
+          .attr('paint-order', 'stroke fill')
           .attr('pointer-events', 'none').text('★');
       }
     }
