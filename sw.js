@@ -1,4 +1,4 @@
-const CACHE = 'map-quest-v23';
+const CACHE = 'map-quest-v24';
 const PRECACHE = [
   './', './index.html', './manifest.json', './icon.svg',
   './oreo-logo.png', './oreo-hint.png', './d3.min.js', './topojson.min.js', './states-10m.json'
