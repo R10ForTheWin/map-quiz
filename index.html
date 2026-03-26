@@ -1093,6 +1093,7 @@ function handleDrop(fips, type, value, sourceEl) {
       document.getElementById('streakBest').textContent    = longestStreak;
       flashPath(fips, true);
       showToast('✓ Correct!', 't-correct');
+      if (answers[fips].name && answers[fips].capital) showOreoMessage(randomCatPun());
       if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
     } else {
       sourceEl.style.opacity = '';
@@ -1174,6 +1175,33 @@ function flashPath(fips, ok) {
     p.classList.remove(cls);
     updateStateFill(fips); // re-apply correct visual state (stripes, green, hinting, etc.)
   }, 750);
+}
+
+// ── CAT PUNS ──
+const CAT_PUNS = [
+  'Purrrrfect! 🐾',
+  'Meow-velous! 🐱',
+  "Paw-some job! 🐾",
+  "That's the cat's meow! 🐱",
+  "You've got to be kit-ting me, that was fast! 🐾",
+  "Claw-some! 🐱",
+  "Feline good about that one! 🐾",
+  "Un-fur-gettable! 🐱",
+  "No kitten around — you nailed it! 🐾",
+  "Hiss-torically correct! 🐱",
+  "Whisker away another one! 🐾",
+  "You're on a roll — claws down the best! 🐱",
+  "Tabby-lous work! 🐾",
+  "Litter-ally perfect! 🐱",
+  "You fur-real know your states! 🐾",
+  "That's purr-ecisely right! 🐱",
+  "You're the cat's pajamas! 🐾",
+  "Meowtstanding! 🐱",
+  "Fur-bulous! 🐾",
+  "Cat-astrophe avoided — you got it! 🐱",
+];
+function randomCatPun() {
+  return CAT_PUNS[Math.floor(Math.random() * CAT_PUNS.length)];
 }
 
 // ── HINTS & AUTO-REVEAL ──
