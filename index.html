@@ -1179,12 +1179,15 @@ function flashPath(fips, ok) {
 // ── HINTS & AUTO-REVEAL ──
 function showHint(fips, type, correctValue) {
   const info = byFips[fips];
-  const stateName = info ? info.name : '';
   const region = info ? info.region : '';
-  const regionHint = region ? ` · found in ${region}` : '';
-  // Always hint with the first letter of the STATE name — useful regardless of
-  // whether the token is the state name or its capital
-  showOreoMessage(`Psst! The state starts with "${stateName[0]}"${regionHint} 🐾`);
+  if (type === 'state') {
+    // They can already read the state name — hint with region only
+    showOreoMessage(`Psst! This state is found in ${region} 🐾`);
+  } else {
+    // Capital token — hint with first letter of the state it belongs to
+    const stateName = info ? info.name : '';
+    showOreoMessage(`Psst! Its state starts with "${stateName[0]}" · found in ${region} 🐾`);
+  }
 }
 
 function removeHint(fips, type) {
