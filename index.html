@@ -747,7 +747,6 @@
     <div class="abbr-progress-row">
       <div class="abbr-prog-track"><div class="abbr-prog-fill" id="abbrProgressFill"></div></div>
       <span class="abbr-prog-label" id="abbrProgressText">1 / 50</span>
-      <!-- total stored in JS CTX.total -->
     </div>
     <div class="abbr-card" id="abbrCard">
       <img id="abbrFlag" class="abbr-flag" src="" alt="" />
@@ -1127,10 +1126,6 @@ const WORLD_DATA = [
   { id:'499', name:'Montenegro',             code:'ME', capital:'Podgorica',              region:'Southern Europe'  },
   { id:'626', name:'Timor-Leste',            code:'TL', capital:'Dili',                   region:'Southeast Asia'   },
 ];
-// deduplicate (Armenia appears twice above — belt-and-suspenders fix)
-const _wSeen = new Set();
-const WORLD_DATA_CLEAN = WORLD_DATA.filter(c => { if (_wSeen.has(c.id)) return false; _wSeen.add(c.id); return true; });
-WORLD_DATA.length = 0; WORLD_DATA_CLEAN.forEach(c => WORLD_DATA.push(c));
 
 // ── WORLD CAPITAL COORDINATES [lat, lon] ──
 const WORLD_CAP_COORDS = {
@@ -1221,10 +1216,16 @@ function setQuizContext(quiz) {
       },
       makeMesh: (topo, obj) => topojson.mesh(topo, obj, (a,b)=>a!==b),
       nameLabel: 'States', capLabel: 'Capitals', nameIcon: '📍',
+      itemLabel: 'state',
       abbrKey: 'abbr',
+      abbrModeLabel: { fwd: 'Name → Abbrev', rev: 'Abbrev → Name' },
+      inputPlaceholder: 'State name…',
       abbrPromptFwd: "What's the abbreviation?",
       abbrPromptRev: 'What state is this?',
       getFlagUrl: s => `https://flagcdn.com/us-${s.abbr.toLowerCase()}.svg`,
+      getItemId: s => s.fips,
+      smallThreshold: 30,
+      calloutDist: 62,
     };
   } else {
     CTX = {
@@ -1245,10 +1246,16 @@ function setQuizContext(quiz) {
       },
       makeMesh: (topo, obj) => topojson.mesh(topo, obj, (a,b)=>a!==b),
       nameLabel: 'Countries', capLabel: 'Capitals', nameIcon: '🌍',
+      itemLabel: 'country',
       abbrKey: 'code',
+      abbrModeLabel: { fwd: 'Name → Code', rev: 'Code → Name' },
+      inputPlaceholder: 'Country name…',
       abbrPromptFwd: "What's the country code?",
       abbrPromptRev: 'What country is this?',
       getFlagUrl: s => `https://flagcdn.com/${s.code.toLowerCase()}.svg`,
+      getItemId: s => s.id,
+      smallThreshold: 10,
+      calloutDist: 28,
     };
   }
 }
@@ -1271,6 +1278,7 @@ let dragItem = null;
 let prevHoverEl = null;
 let currentHoverFips = null;
 let mapFeatures      = null;
+let mapFeatureMap    = null;  // id → feature, for O(1) label lookups
 let mapPathGen       = null;
 let mapG             = null;
 let mapLabelsG       = null;
@@ -1286,6 +1294,7 @@ function startGame(mode, quiz) {
   wrongCounts   = {};
   hintingStates = {};
   mapLabelsG    = null;
+  mapFeatureMap = null;
   scStates      = 0;
   scCapitals    = 0;
 
@@ -1407,8 +1416,9 @@ function renderMap() {
     document.getElementById('map-loading').style.display = 'none';
     document.getElementById('map-svg').style.display = 'block';
 
-    mapFeatures = features;
-    mapPathGen  = path;
+    mapFeatures   = features;
+    mapFeatureMap = Object.fromEntries(features.map(f => [CTX.getFeatureId(f), f]));
+    mapPathGen    = path;
     const wrapper = svg.append('g');
     mapWrapper = wrapper;
     mapG = wrapper.append('g');
@@ -1683,7 +1693,7 @@ function updateStateLabel(fips) {
   const s = CTX.byId[fips];
   if (!s) return;
   const a = answers[fips];
-  const feature = mapFeatures.find(f => CTX.getFeatureId(f) === fips);
+  const feature = mapFeatureMap[fips];
   if (!feature) return;
 
   mapLabelsG.selectAll(`[data-label="${fips}"]`).remove();
@@ -1698,17 +1708,14 @@ function updateStateLabel(fips) {
   // Small countries/states get a leader-line callout instead of inline text
   const svgEl = mapLabelsG.node().ownerSVGElement;
   const svgH  = svgEl ? svgEl.clientHeight : 610;
-  // World map is much more compressed — only use callouts for truly tiny features
-  const smallThreshold = CTX.quiz === 'world' ? 10 : 30;
-  const calloutDist    = CTX.quiz === 'world' ? 28 : 62;
-  const isSmall = Math.min(bw, bh) < smallThreshold;
+  const isSmall = Math.min(bw, bh) < CTX.smallThreshold;
 
   if (isSmall) {
     const lfs = 9; // fixed readable font size for callout
     // Place label box below the feature; flip above if near bottom edge
-    const goDown = (cy + calloutDist + 8) < svgH - 30;
+    const goDown = (cy + CTX.calloutDist + 8) < svgH - 30;
     const lx = cx + 10;
-    const ly = goDown ? cy + calloutDist : cy - calloutDist;
+    const ly = goDown ? cy + CTX.calloutDist : cy - CTX.calloutDist;
 
     // Leader line from centroid edge to label
     mapLabelsG.append('line')
@@ -1799,7 +1806,7 @@ function updateStateLabel(fips) {
 function renderAllLabels() {
   if (!mapLabelsG) return;
   mapLabelsG.selectAll('*').remove();
-  CTX.data.forEach(s => updateStateLabel(s.id || s.fips));
+  CTX.data.forEach(s => updateStateLabel(CTX.getItemId(s)));
 }
 
 function autoReveal(id, type) {
@@ -1951,10 +1958,8 @@ function startAbbrGame(direction, quiz) {
 
   document.getElementById('startModal').style.display  = 'none';
   document.getElementById('abbr-screen').style.display = 'flex';
-  const modeLabel = CTX.quiz === 'world'
-    ? (direction === 'name-to-abbr' ? 'Name → Code' : 'Code → Name')
-    : (direction === 'name-to-abbr' ? 'Name → Abbrev' : 'Abbrev → Name');
-  document.getElementById('abbrModeLabel').textContent = modeLabel;
+  document.getElementById('abbrModeLabel').textContent =
+    direction === 'name-to-abbr' ? CTX.abbrModeLabel.fwd : CTX.abbrModeLabel.rev;
   document.getElementById('abbrTotal').textContent = CTX.total;
 
   updateAbbrStats();
@@ -1989,7 +1994,7 @@ function showAbbrQuestion() {
     prompt.textContent = abbrVal;
     prompt.classList.add('big');
     input.maxLength = 60;
-    input.placeholder = CTX.quiz === 'world' ? 'Country name…' : 'State name…';
+    input.placeholder = CTX.inputPlaceholder;
     input.classList.add('abbr-long');
     input.classList.remove('abbr-short');
   }
@@ -2053,7 +2058,7 @@ function submitAbbrAnswer() {
     card.classList.add('shake');
 
     const answer = abbrMode === 'name-to-abbr' ? abbrVal : s.name;
-    const itemLabel = CTX.quiz === 'world' ? 'country' : 'state';
+    const itemLabel = CTX.itemLabel;
 
     if (abbrCurrentWrong >= 4) {
       showOreoMessage(`It's "${answer}"! 🐾`);
