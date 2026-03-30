@@ -596,6 +596,22 @@
     }
     .confetti { position: fixed; top: -12px; pointer-events: none; animation: confettiFall 3.5s ease-in forwards; border-radius: 2px; }
 
+    /* ── QUIZ TABS ── */
+    .quiz-tabs {
+      display: flex; gap: 6px; margin-bottom: 14px;
+      background: var(--bg); border-radius: var(--radius-sm); padding: 4px;
+    }
+    .quiz-tab {
+      flex: 1; padding: 9px 8px; border: 2px solid transparent;
+      border-radius: 8px; background: transparent;
+      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+      cursor: pointer; transition: all 0.15s; color: var(--text-light);
+    }
+    .quiz-tab.active {
+      background: white; color: var(--primary);
+      border-color: var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
     /* ── MOBILE ── */
     @media (max-width: 680px) {
       .game-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 110px 110px; }
@@ -624,33 +640,70 @@
     <img src="oreo-logo.png" alt="Oreo's Map Quest" class="start-logo">
     <p class="start-device-note">💻 Best experienced on a laptop or desktop</p>
 
-    <div class="study-guide-header map-header">Study Guide 1: Name the State &amp; Capital</div>
-    <button class="mode-btn live" onclick="startGame('live')">
-      <span class="m-text">
-        <span class="m-title">Score As You Go</span>
-        <span class="m-desc">Instant right / wrong feedback on every drop</span>
-      </span>
-    </button>
-    <button class="mode-btn end" onclick="startGame('end')">
-      <span class="m-text">
-        <span class="m-title">Score At The End</span>
-        <span class="m-desc">Place everything first, then check your score</span>
-      </span>
-    </button>
+    <div class="quiz-tabs">
+      <button class="quiz-tab active" id="tabBtnUsa" onclick="switchQuizTab('usa')">🇺🇸 USA States</button>
+      <button class="quiz-tab" id="tabBtnWorld" onclick="switchQuizTab('world')">🌍 World Countries</button>
+    </div>
 
-    <div class="study-guide-header abbr-header">Study Guide 2: What's the Abbreviation?</div>
-    <button class="mode-btn abbr" onclick="startAbbrGame('name-to-abbr')">
-      <span class="m-text">
-        <span class="m-title">Name → Abbreviation</span>
-        <span class="m-desc">See a state name, type its 2-letter code</span>
-      </span>
-    </button>
-    <button class="mode-btn abbr" onclick="startAbbrGame('abbr-to-name')">
-      <span class="m-text">
-        <span class="m-title">Abbreviation → Name</span>
-        <span class="m-desc">See a 2-letter code, type the full state name</span>
-      </span>
-    </button>
+    <!-- USA TAB -->
+    <div id="tab-usa">
+      <div class="study-guide-header map-header">Study Guide 1: Name the State &amp; Capital</div>
+      <button class="mode-btn live" onclick="startGame('live','usa')">
+        <span class="m-text">
+          <span class="m-title">Score As You Go</span>
+          <span class="m-desc">Instant right / wrong feedback on every drop</span>
+        </span>
+      </button>
+      <button class="mode-btn end" onclick="startGame('end','usa')">
+        <span class="m-text">
+          <span class="m-title">Score At The End</span>
+          <span class="m-desc">Place everything first, then check your score</span>
+        </span>
+      </button>
+      <div class="study-guide-header abbr-header">Study Guide 2: What's the Abbreviation?</div>
+      <button class="mode-btn abbr" onclick="startAbbrGame('name-to-abbr','usa')">
+        <span class="m-text">
+          <span class="m-title">Name → Abbreviation</span>
+          <span class="m-desc">See a state name, type its 2-letter code</span>
+        </span>
+      </button>
+      <button class="mode-btn abbr" onclick="startAbbrGame('abbr-to-name','usa')">
+        <span class="m-text">
+          <span class="m-title">Abbreviation → Name</span>
+          <span class="m-desc">See a 2-letter code, type the full state name</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- WORLD TAB -->
+    <div id="tab-world" style="display:none">
+      <div class="study-guide-header map-header">Study Guide 1: Name the Country &amp; Capital</div>
+      <button class="mode-btn live" onclick="startGame('live','world')">
+        <span class="m-text">
+          <span class="m-title">Score As You Go</span>
+          <span class="m-desc">Instant right / wrong feedback on every drop</span>
+        </span>
+      </button>
+      <button class="mode-btn end" onclick="startGame('end','world')">
+        <span class="m-text">
+          <span class="m-title">Score At The End</span>
+          <span class="m-desc">Place everything first, then check your score</span>
+        </span>
+      </button>
+      <div class="study-guide-header abbr-header">Study Guide 2: Country Codes (ISO)</div>
+      <button class="mode-btn abbr" onclick="startAbbrGame('name-to-abbr','world')">
+        <span class="m-text">
+          <span class="m-title">Name → Country Code</span>
+          <span class="m-desc">See a country name, type its 2-letter ISO code</span>
+        </span>
+      </button>
+      <button class="mode-btn abbr" onclick="startAbbrGame('abbr-to-name','world')">
+        <span class="m-text">
+          <span class="m-title">Country Code → Name</span>
+          <span class="m-desc">See a 2-letter code, type the full country name</span>
+        </span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -661,7 +714,7 @@
     <h2 id="endTitle">Amazing Job, Rose!</h2>
     <p class="end-tagline" id="endTagline">You crushed it!</p>
     <div class="end-score-big" id="endScoreBig">100</div>
-    <div class="end-score-sub">out of 100 points</div>
+    <div class="end-score-sub">out of <span id="endScoreMax">100</span> points</div>
     <div class="end-breakdown">
       <div class="bd-item">
         <div class="bd-label" id="endLabel1">States</div>
@@ -684,7 +737,7 @@
       <h1 id="abbrModeLabel">Abbreviations</h1>
     </div>
     <div class="header-scores">
-      <div class="score-pill">✓ <span class="s-num" id="abbrScoreCorrect">0</span>/50</div>
+      <div class="score-pill">✓ <span class="s-num" id="abbrScoreCorrect">0</span>/<span id="abbrTotal">50</span></div>
       <div class="score-pill streak-pill">🔥 Streak <span class="s-num" id="abbrStreakCurrent">0</span></div>
       <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="abbrStreakBest">0</span></div>
     </div>
@@ -694,6 +747,7 @@
     <div class="abbr-progress-row">
       <div class="abbr-prog-track"><div class="abbr-prog-fill" id="abbrProgressFill"></div></div>
       <span class="abbr-prog-label" id="abbrProgressText">1 / 50</span>
+      <!-- total stored in JS CTX.total -->
     </div>
     <div class="abbr-card" id="abbrCard">
       <img id="abbrFlag" class="abbr-flag" src="" alt="" />
@@ -718,8 +772,8 @@
       <h1>Oreo's Map Quest</h1>
     </div>
     <div class="header-scores">
-      <div class="score-pill">📍 States <span class="s-num" id="scoreStates">0</span>/50</div>
-      <div class="score-pill">🏛 Capitals <span class="s-num" id="scoreCapitals">0</span>/50</div>
+      <div class="score-pill"><span id="scoreNameIcon">📍</span> <span id="scoreNameLabel">States</span> <span class="s-num" id="scoreStates">0</span>/<span id="scoreTotalNames">50</span></div>
+      <div class="score-pill">🏛 <span id="scoreCapLabel">Capitals</span> <span class="s-num" id="scoreCapitals">0</span>/<span id="scoreTotalCaps">50</span></div>
       <div class="score-pill streak-pill">🔥 Streak <span class="s-num" id="streakCurrent">0</span></div>
       <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="streakBest">0</span></div>
     </div>
@@ -915,6 +969,297 @@ STATE_DATA.forEach(s => {
   byCapital[s.capital] = s.fips;
 });
 
+// ── WORLD DATA ──
+const WORLD_DATA = [
+  { id:'004', name:'Afghanistan',            code:'AF', capital:'Kabul',                  region:'Central Asia'     },
+  { id:'008', name:'Albania',                code:'AL', capital:'Tirana',                 region:'Southern Europe'  },
+  { id:'012', name:'Algeria',                code:'DZ', capital:'Algiers',                region:'North Africa'     },
+  { id:'024', name:'Angola',                 code:'AO', capital:'Luanda',                 region:'Central Africa'   },
+  { id:'032', name:'Argentina',              code:'AR', capital:'Buenos Aires',            region:'South America'    },
+  { id:'036', name:'Australia',              code:'AU', capital:'Canberra',               region:'Oceania'          },
+  { id:'040', name:'Austria',                code:'AT', capital:'Vienna',                 region:'Central Europe'   },
+  { id:'050', name:'Bangladesh',             code:'BD', capital:'Dhaka',                  region:'South Asia'       },
+  { id:'056', name:'Belgium',                code:'BE', capital:'Brussels',               region:'Western Europe'   },
+  { id:'064', name:'Bhutan',                 code:'BT', capital:'Thimphu',                region:'South Asia'       },
+  { id:'068', name:'Bolivia',                code:'BO', capital:'Sucre',                  region:'South America'    },
+  { id:'070', name:'Bosnia and Herzegovina', code:'BA', capital:'Sarajevo',               region:'Southern Europe'  },
+  { id:'072', name:'Botswana',               code:'BW', capital:'Gaborone',               region:'Southern Africa'  },
+  { id:'076', name:'Brazil',                 code:'BR', capital:'Brasilia',               region:'South America'    },
+  { id:'100', name:'Bulgaria',               code:'BG', capital:'Sofia',                  region:'Eastern Europe'   },
+  { id:'104', name:'Myanmar',                code:'MM', capital:'Naypyidaw',              region:'Southeast Asia'   },
+  { id:'108', name:'Burundi',                code:'BI', capital:'Gitega',                 region:'East Africa'      },
+  { id:'112', name:'Belarus',                code:'BY', capital:'Minsk',                  region:'Eastern Europe'   },
+  { id:'116', name:'Cambodia',               code:'KH', capital:'Phnom Penh',             region:'Southeast Asia'   },
+  { id:'120', name:'Cameroon',               code:'CM', capital:'Yaounde',                region:'Central Africa'   },
+  { id:'124', name:'Canada',                 code:'CA', capital:'Ottawa',                 region:'North America'    },
+  { id:'140', name:'Central African Republic',code:'CF',capital:'Bangui',                 region:'Central Africa'   },
+  { id:'144', name:'Sri Lanka',              code:'LK', capital:'Colombo',                region:'South Asia'       },
+  { id:'148', name:'Chad',                   code:'TD', capital:"N'Djamena",              region:'Central Africa'   },
+  { id:'152', name:'Chile',                  code:'CL', capital:'Santiago',               region:'South America'    },
+  { id:'156', name:'China',                  code:'CN', capital:'Beijing',                region:'East Asia'        },
+  { id:'170', name:'Colombia',               code:'CO', capital:'Bogota',                 region:'South America'    },
+  { id:'178', name:'Republic of Congo',      code:'CG', capital:'Brazzaville',            region:'Central Africa'   },
+  { id:'180', name:'DR Congo',               code:'CD', capital:'Kinshasa',               region:'Central Africa'   },
+  { id:'188', name:'Costa Rica',             code:'CR', capital:'San Jose',               region:'Central America'  },
+  { id:'191', name:'Croatia',                code:'HR', capital:'Zagreb',                 region:'Southern Europe'  },
+  { id:'192', name:'Cuba',                   code:'CU', capital:'Havana',                 region:'the Caribbean'    },
+  { id:'196', name:'Cyprus',                 code:'CY', capital:'Nicosia',                region:'Southern Europe'  },
+  { id:'203', name:'Czech Republic',         code:'CZ', capital:'Prague',                 region:'Central Europe'   },
+  { id:'204', name:'Benin',                  code:'BJ', capital:'Porto-Novo',             region:'West Africa'      },
+  { id:'208', name:'Denmark',                code:'DK', capital:'Copenhagen',             region:'Northern Europe'  },
+  { id:'214', name:'Dominican Republic',     code:'DO', capital:'Santo Domingo',          region:'the Caribbean'    },
+  { id:'218', name:'Ecuador',                code:'EC', capital:'Quito',                  region:'South America'    },
+  { id:'222', name:'El Salvador',            code:'SV', capital:'San Salvador',           region:'Central America'  },
+  { id:'231', name:'Ethiopia',               code:'ET', capital:'Addis Ababa',            region:'East Africa'      },
+  { id:'232', name:'Eritrea',                code:'ER', capital:'Asmara',                 region:'East Africa'      },
+  { id:'233', name:'Estonia',                code:'EE', capital:'Tallinn',                region:'Northern Europe'  },
+  { id:'242', name:'Fiji',                   code:'FJ', capital:'Suva',                   region:'Oceania'          },
+  { id:'246', name:'Finland',                code:'FI', capital:'Helsinki',               region:'Northern Europe'  },
+  { id:'250', name:'France',                 code:'FR', capital:'Paris',                  region:'Western Europe'   },
+  { id:'262', name:'Djibouti',               code:'DJ', capital:'Djibouti',               region:'East Africa'      },
+  { id:'266', name:'Gabon',                  code:'GA', capital:'Libreville',             region:'Central Africa'   },
+  { id:'268', name:'Georgia',                code:'GE', capital:'Tbilisi',                region:'the Caucasus'     },
+  { id:'270', name:'Gambia',                 code:'GM', capital:'Banjul',                 region:'West Africa'      },
+  { id:'276', name:'Germany',                code:'DE', capital:'Berlin',                 region:'Western Europe'   },
+  { id:'288', name:'Ghana',                  code:'GH', capital:'Accra',                  region:'West Africa'      },
+  { id:'300', name:'Greece',                 code:'GR', capital:'Athens',                 region:'Southern Europe'  },
+  { id:'320', name:'Guatemala',              code:'GT', capital:'Guatemala City',          region:'Central America'  },
+  { id:'324', name:'Guinea',                 code:'GN', capital:'Conakry',                region:'West Africa'      },
+  { id:'328', name:'Guyana',                 code:'GY', capital:'Georgetown',             region:'South America'    },
+  { id:'332', name:'Haiti',                  code:'HT', capital:'Port-au-Prince',          region:'the Caribbean'    },
+  { id:'340', name:'Honduras',               code:'HN', capital:'Tegucigalpa',            region:'Central America'  },
+  { id:'348', name:'Hungary',                code:'HU', capital:'Budapest',               region:'Central Europe'   },
+  { id:'356', name:'India',                  code:'IN', capital:'New Delhi',              region:'South Asia'       },
+  { id:'360', name:'Indonesia',              code:'ID', capital:'Jakarta',                region:'Southeast Asia'   },
+  { id:'364', name:'Iran',                   code:'IR', capital:'Tehran',                 region:'Middle East'      },
+  { id:'368', name:'Iraq',                   code:'IQ', capital:'Baghdad',                region:'Middle East'      },
+  { id:'372', name:'Ireland',                code:'IE', capital:'Dublin',                 region:'Western Europe'   },
+  { id:'376', name:'Israel',                 code:'IL', capital:'Jerusalem',              region:'Middle East'      },
+  { id:'380', name:'Italy',                  code:'IT', capital:'Rome',                   region:'Southern Europe'  },
+  { id:'384', name:"Cote d'Ivoire",          code:'CI', capital:'Yamoussoukro',           region:'West Africa'      },
+  { id:'388', name:'Jamaica',                code:'JM', capital:'Kingston',               region:'the Caribbean'    },
+  { id:'392', name:'Japan',                  code:'JP', capital:'Tokyo',                  region:'East Asia'        },
+  { id:'398', name:'Kazakhstan',             code:'KZ', capital:'Astana',                 region:'Central Asia'     },
+  { id:'400', name:'Jordan',                 code:'JO', capital:'Amman',                  region:'Middle East'      },
+  { id:'404', name:'Kenya',                  code:'KE', capital:'Nairobi',                region:'East Africa'      },
+  { id:'408', name:'North Korea',            code:'KP', capital:'Pyongyang',              region:'East Asia'        },
+  { id:'410', name:'South Korea',            code:'KR', capital:'Seoul',                  region:'East Asia'        },
+  { id:'417', name:'Kyrgyzstan',             code:'KG', capital:'Bishkek',                region:'Central Asia'     },
+  { id:'418', name:'Laos',                   code:'LA', capital:'Vientiane',              region:'Southeast Asia'   },
+  { id:'422', name:'Lebanon',                code:'LB', capital:'Beirut',                 region:'Middle East'      },
+  { id:'426', name:'Lesotho',                code:'LS', capital:'Maseru',                 region:'Southern Africa'  },
+  { id:'428', name:'Latvia',                 code:'LV', capital:'Riga',                   region:'Northern Europe'  },
+  { id:'430', name:'Liberia',                code:'LR', capital:'Monrovia',               region:'West Africa'      },
+  { id:'434', name:'Libya',                  code:'LY', capital:'Tripoli',                region:'North Africa'     },
+  { id:'440', name:'Lithuania',              code:'LT', capital:'Vilnius',                region:'Northern Europe'  },
+  { id:'442', name:'Luxembourg',             code:'LU', capital:'Luxembourg City',        region:'Western Europe'   },
+  { id:'450', name:'Madagascar',             code:'MG', capital:'Antananarivo',           region:'East Africa'      },
+  { id:'454', name:'Malawi',                 code:'MW', capital:'Lilongwe',               region:'Southern Africa'  },
+  { id:'458', name:'Malaysia',               code:'MY', capital:'Kuala Lumpur',           region:'Southeast Asia'   },
+  { id:'466', name:'Mali',                   code:'ML', capital:'Bamako',                 region:'West Africa'      },
+  { id:'478', name:'Mauritania',             code:'MR', capital:'Nouakchott',             region:'West Africa'      },
+  { id:'484', name:'Mexico',                 code:'MX', capital:'Mexico City',            region:'North America'    },
+  { id:'496', name:'Mongolia',               code:'MN', capital:'Ulaanbaatar',            region:'East Asia'        },
+  { id:'498', name:'Moldova',                code:'MD', capital:'Chisinau',               region:'Eastern Europe'   },
+  { id:'504', name:'Morocco',                code:'MA', capital:'Rabat',                  region:'North Africa'     },
+  { id:'508', name:'Mozambique',             code:'MZ', capital:'Maputo',                 region:'Southern Africa'  },
+  { id:'512', name:'Oman',                   code:'OM', capital:'Muscat',                 region:'Middle East'      },
+  { id:'516', name:'Namibia',                code:'NA', capital:'Windhoek',               region:'Southern Africa'  },
+  { id:'524', name:'Nepal',                  code:'NP', capital:'Kathmandu',              region:'South Asia'       },
+  { id:'528', name:'Netherlands',            code:'NL', capital:'Amsterdam',              region:'Western Europe'   },
+  { id:'554', name:'New Zealand',            code:'NZ', capital:'Wellington',             region:'Oceania'          },
+  { id:'558', name:'Nicaragua',              code:'NI', capital:'Managua',                region:'Central America'  },
+  { id:'562', name:'Niger',                  code:'NE', capital:'Niamey',                 region:'West Africa'      },
+  { id:'566', name:'Nigeria',                code:'NG', capital:'Abuja',                  region:'West Africa'      },
+  { id:'578', name:'Norway',                 code:'NO', capital:'Oslo',                   region:'Northern Europe'  },
+  { id:'586', name:'Pakistan',               code:'PK', capital:'Islamabad',              region:'South Asia'       },
+  { id:'591', name:'Panama',                 code:'PA', capital:'Panama City',            region:'Central America'  },
+  { id:'598', name:'Papua New Guinea',       code:'PG', capital:'Port Moresby',           region:'Oceania'          },
+  { id:'600', name:'Paraguay',               code:'PY', capital:'Asuncion',               region:'South America'    },
+  { id:'604', name:'Peru',                   code:'PE', capital:'Lima',                   region:'South America'    },
+  { id:'608', name:'Philippines',            code:'PH', capital:'Manila',                 region:'Southeast Asia'   },
+  { id:'616', name:'Poland',                 code:'PL', capital:'Warsaw',                 region:'Eastern Europe'   },
+  { id:'620', name:'Portugal',               code:'PT', capital:'Lisbon',                 region:'Southern Europe'  },
+  { id:'624', name:'Guinea-Bissau',          code:'GW', capital:'Bissau',                 region:'West Africa'      },
+  { id:'642', name:'Romania',                code:'RO', capital:'Bucharest',              region:'Eastern Europe'   },
+  { id:'643', name:'Russia',                 code:'RU', capital:'Moscow',                 region:'Eastern Europe'   },
+  { id:'646', name:'Rwanda',                 code:'RW', capital:'Kigali',                 region:'East Africa'      },
+  { id:'682', name:'Saudi Arabia',           code:'SA', capital:'Riyadh',                 region:'Middle East'      },
+  { id:'686', name:'Senegal',                code:'SN', capital:'Dakar',                  region:'West Africa'      },
+  { id:'688', name:'Serbia',                 code:'RS', capital:'Belgrade',               region:'Southern Europe'  },
+  { id:'694', name:'Sierra Leone',           code:'SL', capital:'Freetown',               region:'West Africa'      },
+  { id:'703', name:'Slovakia',               code:'SK', capital:'Bratislava',             region:'Central Europe'   },
+  { id:'705', name:'Slovenia',               code:'SI', capital:'Ljubljana',              region:'Southern Europe'  },
+  { id:'706', name:'Somalia',                code:'SO', capital:'Mogadishu',              region:'East Africa'      },
+  { id:'710', name:'South Africa',           code:'ZA', capital:'Pretoria',               region:'Southern Africa'  },
+  { id:'724', name:'Spain',                  code:'ES', capital:'Madrid',                 region:'Southern Europe'  },
+  { id:'728', name:'South Sudan',            code:'SS', capital:'Juba',                   region:'East Africa'      },
+  { id:'729', name:'Sudan',                  code:'SD', capital:'Khartoum',               region:'North Africa'     },
+  { id:'740', name:'Suriname',               code:'SR', capital:'Paramaribo',             region:'South America'    },
+  { id:'752', name:'Sweden',                 code:'SE', capital:'Stockholm',              region:'Northern Europe'  },
+  { id:'756', name:'Switzerland',            code:'CH', capital:'Bern',                   region:'Central Europe'   },
+  { id:'760', name:'Syria',                  code:'SY', capital:'Damascus',               region:'Middle East'      },
+  { id:'762', name:'Tajikistan',             code:'TJ', capital:'Dushanbe',               region:'Central Asia'     },
+  { id:'764', name:'Thailand',               code:'TH', capital:'Bangkok',                region:'Southeast Asia'   },
+  { id:'768', name:'Togo',                   code:'TG', capital:'Lome',                   region:'West Africa'      },
+  { id:'788', name:'Tunisia',                code:'TN', capital:'Tunis',                  region:'North Africa'     },
+  { id:'792', name:'Turkey',                 code:'TR', capital:'Ankara',                 region:'Middle East'      },
+  { id:'795', name:'Turkmenistan',           code:'TM', capital:'Ashgabat',               region:'Central Asia'     },
+  { id:'800', name:'Uganda',                 code:'UG', capital:'Kampala',                region:'East Africa'      },
+  { id:'804', name:'Ukraine',                code:'UA', capital:'Kyiv',                   region:'Eastern Europe'   },
+  { id:'784', name:'United Arab Emirates',   code:'AE', capital:'Abu Dhabi',              region:'Middle East'      },
+  { id:'807', name:'North Macedonia',        code:'MK', capital:'Skopje',                 region:'Southern Europe'  },
+  { id:'818', name:'Egypt',                  code:'EG', capital:'Cairo',                  region:'North Africa'     },
+  { id:'826', name:'United Kingdom',         code:'GB', capital:'London',                 region:'Western Europe'   },
+  { id:'834', name:'Tanzania',               code:'TZ', capital:'Dodoma',                 region:'East Africa'      },
+  { id:'840', name:'United States',          code:'US', capital:'Washington DC',          region:'North America'    },
+  { id:'854', name:'Burkina Faso',           code:'BF', capital:'Ouagadougou',            region:'West Africa'      },
+  { id:'858', name:'Uruguay',                code:'UY', capital:'Montevideo',              region:'South America'    },
+  { id:'860', name:'Uzbekistan',             code:'UZ', capital:'Tashkent',               region:'Central Asia'     },
+  { id:'862', name:'Venezuela',              code:'VE', capital:'Caracas',                region:'South America'    },
+  { id:'704', name:'Vietnam',                code:'VN', capital:'Hanoi',                  region:'Southeast Asia'   },
+  { id:'887', name:'Yemen',                  code:'YE', capital:'Sanaa',                  region:'Middle East'      },
+  { id:'894', name:'Zambia',                 code:'ZM', capital:'Lusaka',                 region:'Southern Africa'  },
+  { id:'716', name:'Zimbabwe',               code:'ZW', capital:'Harare',                 region:'Southern Africa'  },
+  { id:'051', name:'Armenia',                code:'AM', capital:'Yerevan',                region:'the Caucasus'     },
+  { id:'031', name:'Azerbaijan',             code:'AZ', capital:'Baku',                   region:'the Caucasus'     },
+  { id:'084', name:'Belize',                 code:'BZ', capital:'Belmopan',               region:'Central America'  },
+  { id:'499', name:'Montenegro',             code:'ME', capital:'Podgorica',              region:'Southern Europe'  },
+  { id:'626', name:'Timor-Leste',            code:'TL', capital:'Dili',                   region:'Southeast Asia'   },
+];
+// deduplicate (Armenia appears twice above — belt-and-suspenders fix)
+const _wSeen = new Set();
+const WORLD_DATA_CLEAN = WORLD_DATA.filter(c => { if (_wSeen.has(c.id)) return false; _wSeen.add(c.id); return true; });
+WORLD_DATA.length = 0; WORLD_DATA_CLEAN.forEach(c => WORLD_DATA.push(c));
+
+// ── WORLD CAPITAL COORDINATES [lat, lon] ──
+const WORLD_CAP_COORDS = {
+  '004':[34.528,69.172],'008':[41.332,19.832],'012':[36.754,3.059],
+  '024':[-8.839,13.289],'032':[-34.604,-58.382],'036':[-35.282,149.129],
+  '040':[48.208,16.374],'050':[23.728,90.406],'056':[50.850,4.352],
+  '064':[27.473,89.639],'068':[-19.020,-65.262],'070':[43.848,18.356],
+  '072':[-24.628,25.923],'076':[-15.780,-47.930],'100':[42.698,23.322],
+  '104':[19.748,96.117],'108':[-3.373,29.919],'112':[53.904,27.562],
+  '116':[11.563,104.916],'120':[3.861,11.519],'124':[45.422,-75.697],
+  '140':[4.361,18.555],'144':[6.914,79.864],'148':[12.105,15.044],
+  '152':[-33.449,-70.669],'156':[39.908,116.397],'170':[4.711,-74.072],
+  '178':[-4.266,15.283],'180':[-4.322,15.322],'188':[9.928,-84.091],
+  '191':[45.815,15.982],'192':[23.114,-82.367],'196':[35.186,33.382],
+  '203':[50.076,14.438],'204':[6.368,2.425],'208':[55.676,12.568],
+  '214':[18.486,-69.931],'218':[-0.230,-78.524],'222':[13.693,-89.218],
+  '231':[8.981,38.758],'232':[15.339,38.931],'233':[59.437,24.754],
+  '242':[-18.142,178.442],'246':[60.170,24.938],'250':[48.857,2.352],
+  '262':[11.572,43.146],'266':[0.390,9.452],'268':[41.694,44.834],
+  '270':[13.455,-16.579],'276':[52.520,13.405],'288':[5.550,-0.200],
+  '300':[37.984,23.728],'320':[14.641,-90.513],'324':[9.537,-13.677],
+  '328':[6.801,-58.155],'332':[18.539,-72.335],'340':[14.072,-87.206],
+  '348':[47.498,19.040],'356':[28.614,77.209],'360':[-6.209,106.846],
+  '364':[35.689,51.389],'368':[33.315,44.366],'372':[53.350,-6.260],
+  '376':[31.768,35.214],'380':[41.903,12.496],'384':[6.828,-5.289],
+  '388':[18.000,-76.794],'392':[35.676,139.650],'398':[51.180,71.446],
+  '400':[31.954,35.911],'404':[-1.292,36.822],'408':[39.039,125.763],
+  '410':[37.567,126.978],'417':[42.875,74.570],'418':[17.976,102.633],
+  '422':[33.889,35.496],'426':[-29.315,27.487],'428':[56.950,24.105],
+  '430':[6.299,-10.796],'434':[32.904,13.180],'440':[54.687,25.280],
+  '442':[49.612,6.132],'450':[-18.914,47.536],'454':[-13.963,33.774],
+  '458':[3.148,101.695],'466':[12.639,-8.003],'478':[18.086,-15.979],
+  '484':[19.433,-99.133],'496':[47.886,106.906],'498':[47.011,28.864],
+  '504':[34.021,-6.842],'508':[-25.965,32.589],'512':[23.590,58.590],
+  '516':[-22.560,17.083],'524':[27.717,85.324],'528':[52.368,4.904],
+  '554':[-41.287,174.776],'558':[12.136,-86.251],'562':[13.514,2.110],
+  '566':[9.077,7.399],'578':[59.914,10.752],'586':[33.722,73.043],
+  '591':[8.994,-79.520],'598':[-9.444,147.180],'600':[-25.287,-57.647],
+  '604':[-12.046,-77.043],'608':[14.600,121.000],'616':[52.230,21.012],
+  '620':[38.717,-9.140],'624':[11.864,-15.598],'642':[44.427,26.103],
+  '643':[55.756,37.617],'646':[-1.944,30.062],'682':[24.688,46.722],
+  '686':[14.717,-17.468],'688':[44.804,20.465],'694':[8.488,-13.234],
+  '703':[48.148,17.107],'705':[46.057,14.506],'706':[2.047,45.318],
+  '710':[-25.746,28.188],'724':[40.417,-3.704],'728':[4.859,31.571],
+  '729':[15.501,32.560],'740':[5.866,-55.167],'752':[59.329,18.069],
+  '756':[46.948,7.447],'760':[33.514,36.277],'762':[38.576,68.779],
+  '764':[13.756,100.502],'768':[6.123,1.226],'788':[36.819,10.166],
+  '792':[39.933,32.860],'795':[37.960,58.326],'800':[0.316,32.582],
+  '804':[50.450,30.523],'784':[24.454,54.377],'807':[41.998,21.425],
+  '818':[30.044,31.236],'826':[51.507,-0.128],'834':[-6.172,35.740],
+  '840':[38.907,-77.037],'854':[12.371,-1.520],'858':[-34.901,-56.165],
+  '860':[41.300,69.240],'862':[10.481,-66.904],'704':[21.029,105.854],
+  '887':[15.369,44.191],'894':[-15.417,28.283],'716':[-17.825,31.034],
+  '051':[40.179,44.499],'031':[40.409,49.867],'084':[17.251,-88.759],
+  '499':[42.441,19.263],'626':[-8.557,125.560],
+};
+
+// world lookups
+const byCountryId   = {};
+const byCountryName = {};
+const byWorldCapital = {};
+WORLD_DATA.forEach(c => {
+  byCountryId[c.id]       = c;
+  byCountryName[c.name]   = c.id;
+  byWorldCapital[c.capital] = c.id;
+});
+
+// ── QUIZ CONTEXT ──
+let CTX = null;
+
+function setQuizContext(quiz) {
+  if (quiz === 'usa') {
+    CTX = {
+      quiz:       'usa',
+      data:       STATE_DATA,
+      byId:       byFips,
+      byItemName: byName,
+      byCapital:  byCapital,
+      adjacent:   ADJACENT,
+      capCoords:  CAP_COORDS,
+      total:      50,
+      mapUrl:     './states-10m.json',
+      featureObj: 'states',
+      getFeatureId: f => String(f.id).padStart(2,'0'),
+      makeProjection(W, H) {
+        const scale = Math.min((W-40)/975,(H-40)/610);
+        return d3.geoAlbersUsa().scale(1280*scale).translate([W/2,(H/2)+(H*0.02)]);
+      },
+      makeMesh: (topo, obj) => topojson.mesh(topo, obj, (a,b)=>a!==b),
+      nameLabel: 'States', capLabel: 'Capitals', nameIcon: '📍',
+      abbrKey: 'abbr',
+      abbrPromptFwd: "What's the abbreviation?",
+      abbrPromptRev: 'What state is this?',
+      getFlagUrl: s => `https://flagcdn.com/us-${s.abbr.toLowerCase()}.svg`,
+    };
+  } else {
+    CTX = {
+      quiz:       'world',
+      data:       WORLD_DATA,
+      byId:       byCountryId,
+      byItemName: byCountryName,
+      byCapital:  byWorldCapital,
+      adjacent:   {},
+      capCoords:  WORLD_CAP_COORDS,
+      total:      WORLD_DATA.length,
+      mapUrl:     'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
+      featureObj: 'countries',
+      getFeatureId: f => String(f.id).padStart(3,'0'),
+      makeProjection(W, H) {
+        const scale = Math.min(W/6.0, H/3.0);
+        return d3.geoNaturalEarth1().scale(scale).translate([W/2, H/2]);
+      },
+      makeMesh: (topo, obj) => topojson.mesh(topo, obj, (a,b)=>a!==b),
+      nameLabel: 'Countries', capLabel: 'Capitals', nameIcon: '🌍',
+      abbrKey: 'code',
+      abbrPromptFwd: "What's the country code?",
+      abbrPromptRev: 'What country is this?',
+      getFlagUrl: s => `https://flagcdn.com/${s.code.toLowerCase()}.svg`,
+    };
+  }
+}
+
+function switchQuizTab(tab) {
+  document.getElementById('tab-usa').style.display   = tab==='usa'   ? '' : 'none';
+  document.getElementById('tab-world').style.display = tab==='world' ? '' : 'none';
+  document.getElementById('tabBtnUsa').classList.toggle('active',   tab==='usa');
+  document.getElementById('tabBtnWorld').classList.toggle('active', tab==='world');
+}
+
 // ── GAME STATE ──
 let gameMode = null;
 let answers      = {};
@@ -934,7 +1279,8 @@ let mapZoomBehavior  = null;
 const ghost = document.getElementById('drag-ghost');
 
 // ── START / RESET ──
-function startGame(mode) {
+function startGame(mode, quiz) {
+  setQuizContext(quiz || 'usa');
   gameMode      = mode;
   answers       = {};
   wrongCounts   = {};
@@ -947,11 +1293,18 @@ function startGame(mode) {
   document.getElementById('endModal').style.display   = 'none';
   document.getElementById('app').style.display        = 'flex';
   currentStreak = 0; longestStreak = 0;
-  document.getElementById('scoreStates').textContent    = '0';
-  document.getElementById('scoreCapitals').textContent  = '0';
-  document.getElementById('streakCurrent').textContent  = '0';
-  document.getElementById('streakBest').textContent     = '0';
-  document.getElementById('checkBtn').style.display   = mode === 'end' ? 'block' : 'none';
+  document.getElementById('scoreStates').textContent   = '0';
+  document.getElementById('scoreCapitals').textContent = '0';
+  document.getElementById('streakCurrent').textContent = '0';
+  document.getElementById('streakBest').textContent    = '0';
+  document.getElementById('checkBtn').style.display    = mode === 'end' ? 'block' : 'none';
+
+  // Update dynamic labels/totals
+  document.getElementById('scoreNameIcon').textContent  = CTX.nameIcon;
+  document.getElementById('scoreNameLabel').textContent = CTX.nameLabel;
+  document.getElementById('scoreCapLabel').textContent  = CTX.capLabel;
+  document.getElementById('scoreTotalNames').textContent = CTX.total;
+  document.getElementById('scoreTotalCaps').textContent  = CTX.total;
 
   buildWordBanks();
   // Defer until browser has finished layout — Safari needs a longer wait
@@ -984,17 +1337,16 @@ function buildWordBanks() {
   sb.innerHTML = '';
   cb.innerHTML = '';
 
-  const byStateName   = [...STATE_DATA].sort((a,b) => a.name.localeCompare(b.name));
-  const byCapitalName = [...STATE_DATA].sort((a,b) => a.capital.localeCompare(b.capital));
+  document.querySelector('.states-bank .bank-header').textContent =
+    CTX.nameIcon + ' ' + CTX.nameLabel;
+  document.querySelector('.capitals-bank .bank-header').textContent =
+    '🏛 ' + CTX.capLabel;
 
-  byStateName.forEach(s => {
-    const el = makeToken('state', s.name);
-    sb.appendChild(el);
-  });
-  byCapitalName.forEach(s => {
-    const el = makeToken('capital', s.capital);
-    cb.appendChild(el);
-  });
+  const byItemName  = [...CTX.data].sort((a,b) => a.name.localeCompare(b.name));
+  const byCapName   = [...CTX.data].sort((a,b) => a.capital.localeCompare(b.capital));
+
+  byItemName.forEach(s => sb.appendChild(makeToken('state', s.name)));
+  byCapName.forEach(s  => cb.appendChild(makeToken('capital', s.capital)));
 }
 
 function makeToken(type, value) {
@@ -1038,19 +1390,17 @@ function renderMap() {
   op.append('line').attr('x1',0).attr('y1',0).attr('x2',0).attr('y2',8)
     .attr('stroke','#FF9600').attr('stroke-width',4).attr('stroke-opacity',0.85);
 
-  d3.json('./states-10m.json').then(us => {
-    const features = topojson.feature(us, us.objects.states).features;
-    // Scale the standard 975×610 Albers USA projection to fill this container
-    const scale = Math.min((W - 40) / 975, (H - 40) / 610);
-    const projection = d3.geoAlbersUsa()
-      .scale(1280 * scale)
-      .translate([W / 2, (H / 2) + (H * 0.02)]);
+  d3.json(CTX.mapUrl).then(topo => {
+    const allFeatures = topojson.feature(topo, topo.objects[CTX.featureObj]).features;
+    // Exclude Antarctica (ISO numeric 10)
+    const features = allFeatures.filter(f => f.id !== 10);
+    const projection = CTX.makeProjection(W, H);
     const path = d3.geoPath().projection(projection);
 
     // Only initialise answers on first load, not on resize re-render
     features.forEach(f => {
-      const fips = String(f.id).padStart(2,'0');
-      if (!answers[fips]) answers[fips] = { name: null, capital: null };
+      const id = CTX.getFeatureId(f);
+      if (!answers[id]) answers[id] = { name: null, capital: null };
     });
 
     // Show map, hide loader
@@ -1069,10 +1419,10 @@ function renderMap() {
       .append('path')
       .attr('class', 'state-path hoverable')
       .attr('d', path)
-      .attr('data-fips', d => String(d.id).padStart(2,'0'));
+      .attr('data-fips', d => CTX.getFeatureId(d));
 
     mapG.append('path')
-      .datum(topojson.mesh(us, us.objects.states, (a,b) => a !== b))
+      .datum(CTX.makeMesh(topo, topo.objects[CTX.featureObj]))
       .attr('class', 'state-borders')
       .attr('d', path);
 
@@ -1168,7 +1518,7 @@ function moveGhost(x, y) {
 
 // ── HANDLE DROP ──
 function handleDrop(fips, type, value, sourceEl) {
-  const info = byFips[fips];
+  const info = CTX.byId[fips];
   if (!info) { sourceEl.style.opacity = ''; return; }
 
   if (gameMode === 'live') {
@@ -1189,22 +1539,22 @@ function handleDrop(fips, type, value, sourceEl) {
       flashPath(fips, true);
       showToast('✓ Correct!', 't-correct');
       if (answers[fips].name && answers[fips].capital) showOreoMessage(randomCatPun());
-      if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
+      if (scStates === CTX.total && scCapitals === CTX.total) setTimeout(showEndModal, 900);
     } else {
       sourceEl.style.opacity = '';
       currentStreak = 0;
       document.getElementById('streakCurrent').textContent = 0;
       wrongCounts[value] = (wrongCounts[value] || 0) + 1;
       const tries = wrongCounts[value];
-      const correctFips = type === 'state' ? byName[value] : byCapital[value];
+      const correctId = type === 'state' ? CTX.byItemName[value] : CTX.byCapital[value];
 
       if (tries >= 7) {
-        autoReveal(correctFips, type);
+        autoReveal(correctId, type);
       } else if (tries >= 5) {
-        showAdjacentHint(correctFips);
+        showAdjacentHint(correctId);
         flashPath(fips, false);
       } else if (tries >= 3) {
-        showHint(correctFips, type, value);
+        showHint(correctId, type, value);
         flashPath(fips, false);
       } else {
         flashPath(fips, false);
@@ -1300,16 +1650,14 @@ function randomCatPun() {
 }
 
 // ── HINTS & AUTO-REVEAL ──
-function showHint(fips, type, correctValue) {
-  const info = byFips[fips];
+function showHint(id, type, correctValue) {
+  const info = CTX.byId[id];
   const region = info ? info.region : '';
   if (type === 'state') {
-    // They can already read the state name — hint with region only
-    showOreoMessage(`Psst! This state is found in ${region} 🐾`);
+    showOreoMessage(`Psst! This ${CTX.nameLabel.slice(0,-1).toLowerCase()} is found in ${region} 🐾`);
   } else {
-    // Capital token — hint with first letter of the state it belongs to
-    const stateName = info ? info.name : '';
-    showOreoMessage(`Psst! Its state starts with "${stateName[0]}" · found in ${region} 🐾`);
+    const itemName = info ? info.name : '';
+    showOreoMessage(`Psst! Its ${CTX.nameLabel.slice(0,-1).toLowerCase()} starts with "${itemName[0]}" · found in ${region} 🐾`);
   }
 }
 
@@ -1317,10 +1665,10 @@ function removeHint(fips, type) {
   delete hintingStates[`${fips}-${type}`];
 }
 
-function showAdjacentHint(fips) {
-  const neighbors = ADJACENT[fips] || [];
+function showAdjacentHint(id) {
+  const neighbors = (CTX.adjacent[id]) || [];
   if (neighbors.length === 0) {
-    showOreoMessage(`It's not connected to any other state! 🐾`);
+    showOreoMessage(`It doesn't border any others on the map! 🐾`);
     return;
   }
   const list = neighbors.length === 1
@@ -1332,10 +1680,10 @@ function showAdjacentHint(fips) {
 // ── STATE LABELS & CAPITAL STARS ──
 function updateStateLabel(fips) {
   if (!mapLabelsG || !mapPathGen || !mapFeatures) return;
-  const s = byFips[fips];
+  const s = CTX.byId[fips];
   if (!s) return;
   const a = answers[fips];
-  const feature = mapFeatures.find(f => String(f.id).padStart(2,'0') === fips);
+  const feature = mapFeatures.find(f => CTX.getFeatureId(f) === fips);
   if (!feature) return;
 
   mapLabelsG.selectAll(`[data-label="${fips}"]`).remove();
@@ -1424,10 +1772,10 @@ function updateStateLabel(fips) {
     }
   }
 
-  // Capital star at actual coordinates (all states)
+  // Capital star at actual coordinates
   if (a.capital) {
     const proj = mapPathGen.projection();
-    const coords = CAP_COORDS[fips];
+    const coords = CTX.capCoords[fips];
     if (proj && coords) {
       const pt = proj([coords[1], coords[0]]); // [lon, lat]
       if (pt) {
@@ -1448,11 +1796,11 @@ function updateStateLabel(fips) {
 function renderAllLabels() {
   if (!mapLabelsG) return;
   mapLabelsG.selectAll('*').remove();
-  STATE_DATA.forEach(s => updateStateLabel(s.fips));
+  CTX.data.forEach(s => updateStateLabel(s.id || s.fips));
 }
 
-function autoReveal(fips, type) {
-  const info  = byFips[fips];
+function autoReveal(id, type) {
+  const info  = CTX.byId[id];
   const value = type === 'state' ? info.name : info.capital;
 
   // Mark token as used/correct in the bank
@@ -1463,33 +1811,33 @@ function autoReveal(fips, type) {
     }
   });
 
-  answers[fips][type === 'state' ? 'name' : 'capital'] = value;
-  removeHint(fips, type);
-  updateStateFill(fips);
-  updateStateLabel(fips);
+  answers[id][type === 'state' ? 'name' : 'capital'] = value;
+  removeHint(id, type);
+  updateStateFill(id);
+  updateStateLabel(id);
 
   if (type === 'state') { scStates++;   document.getElementById('scoreStates').textContent   = scStates;   }
   else                  { scCapitals++; document.getElementById('scoreCapitals').textContent = scCapitals; }
 
-  flashPath(fips, true);
+  flashPath(id, true);
   showOreoMessage(`Here you go — "${value}"! 🐾`);
-  if (scStates === 50 && scCapitals === 50) setTimeout(showEndModal, 900);
+  if (scStates === CTX.total && scCapitals === CTX.total) setTimeout(showEndModal, 900);
 }
 
 // ── CHECK ANSWERS (end mode) ──
 function checkAnswers() {
   let sc = 0, cc = 0;
 
-  Object.keys(answers).forEach(fips => {
-    const info = byFips[fips];
+  Object.keys(answers).forEach(id => {
+    const info = CTX.byId[id];
     if (!info) return;
-    const a = answers[fips];
+    const a = answers[id];
     const nameOk = a.name    === info.name;
     const capOk  = a.capital === info.capital;
     if (nameOk) sc++;
     if (capOk)  cc++;
 
-    const p = document.querySelector(`.state-path[data-fips="${fips}"]`);
+    const p = document.querySelector(`.state-path[data-fips="${id}"]`);
     if (p) {
       p.style.fill = '';
       p.classList.remove('name-placed','both-placed','correct','wrong');
@@ -1502,12 +1850,12 @@ function checkAnswers() {
   // style tokens
   document.querySelectorAll('.token').forEach(t => {
     if (!t.classList.contains('used')) return;
-    const type  = t.dataset.type;
-    const val   = t.dataset.value;
-    const fips  = type === 'state' ? byName[val] : byCapital[val];
-    if (!fips) return;
-    const info  = byFips[fips];
-    const ok    = type === 'state' ? val === info.name : val === info.capital;
+    const type = t.dataset.type;
+    const val  = t.dataset.value;
+    const id   = type === 'state' ? CTX.byItemName[val] : CTX.byCapital[val];
+    if (!id) return;
+    const info = CTX.byId[id];
+    const ok   = type === 'state' ? val === info.name : val === info.capital;
     t.classList.add(ok ? 'correct' : 'wrong');
   });
 
@@ -1521,17 +1869,21 @@ function checkAnswers() {
 // ── END MODAL ──
 function showEndModal() {
   const total = scStates + scCapitals;
-  const pct   = total / 100;
+  const maxPts = CTX.total * 2;
+  const pct   = total / maxPts;
   const trophy  = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🥈' : pct >= 0.5 ? '🥉' : '⭐';
   const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
-  const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? 'Oreo thinks you\'re paw-some!' : pct >= 0.5 ? 'More practice and you\'ll nail it!' : 'Every quiz makes you better!';
+  const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? "Oreo thinks you're paw-some!" : pct >= 0.5 ? "More practice and you'll nail it!" : 'Every quiz makes you better!';
 
-  document.getElementById('endTrophy').textContent  = trophy;
-  document.getElementById('endTitle').textContent   = title;
-  document.getElementById('endTagline').textContent = tagline;
+  document.getElementById('endTrophy').textContent   = trophy;
+  document.getElementById('endTitle').textContent    = title;
+  document.getElementById('endTagline').textContent  = tagline;
   document.getElementById('endScoreBig').textContent = total;
-  document.getElementById('endStates').textContent   = scStates   + '/50';
-  document.getElementById('endCapitals').textContent = scCapitals + '/50';
+  document.getElementById('endScoreMax').textContent = maxPts;
+  document.getElementById('endLabel1').textContent   = CTX.nameLabel;
+  document.getElementById('endLabel2').textContent   = CTX.capLabel;
+  document.getElementById('endStates').textContent   = scStates   + '/' + CTX.total;
+  document.getElementById('endCapitals').textContent = scCapitals + '/' + CTX.total;
   document.getElementById('endModal').style.display  = 'flex';
   launchConfetti();
 }
@@ -1587,16 +1939,20 @@ let abbrCorrect = 0, abbrCurrentWrong = 0;
 let abbrStreak = 0, abbrBestStreak = 0;
 let abbrRevealed = false;
 
-function startAbbrGame(direction) {
+function startAbbrGame(direction, quiz) {
+  setQuizContext(quiz || 'usa');
   abbrMode = direction;
-  abbrQueue = [...STATE_DATA].sort(() => Math.random() - 0.5);
+  abbrQueue = [...CTX.data].sort(() => Math.random() - 0.5);
   abbrIdx = 0; abbrCorrect = 0;
   abbrStreak = 0; abbrBestStreak = 0;
 
   document.getElementById('startModal').style.display  = 'none';
   document.getElementById('abbr-screen').style.display = 'flex';
-  document.getElementById('abbrModeLabel').textContent =
-    direction === 'name-to-abbr' ? 'Name → Abbrev' : 'Abbrev → Name';
+  const modeLabel = CTX.quiz === 'world'
+    ? (direction === 'name-to-abbr' ? 'Name → Code' : 'Code → Name')
+    : (direction === 'name-to-abbr' ? 'Name → Abbrev' : 'Abbrev → Name');
+  document.getElementById('abbrModeLabel').textContent = modeLabel;
+  document.getElementById('abbrTotal').textContent = CTX.total;
 
   updateAbbrStats();
   showAbbrQuestion();
@@ -1615,21 +1971,24 @@ function showAbbrQuestion() {
 
   const prompt = document.getElementById('abbrPrompt');
   const label  = document.getElementById('abbrPromptLabel');
+  const abbrVal = s[CTX.abbrKey];
 
   if (abbrMode === 'name-to-abbr') {
-    label.textContent = "What's the abbreviation?";
+    label.textContent = CTX.abbrPromptFwd;
     prompt.textContent = s.name;
     prompt.classList.remove('big');
     input.maxLength = 2;
     input.placeholder = '??';
     input.classList.add('abbr-short');
+    input.classList.remove('abbr-long');
   } else {
-    label.textContent = 'What state is this?';
-    prompt.textContent = s.abbr;
+    label.textContent = CTX.abbrPromptRev;
+    prompt.textContent = abbrVal;
     prompt.classList.add('big');
-    input.maxLength = 50;
-    input.placeholder = 'State name…';
+    input.maxLength = 60;
+    input.placeholder = CTX.quiz === 'world' ? 'Country name…' : 'State name…';
     input.classList.add('abbr-long');
+    input.classList.remove('abbr-short');
   }
 
   const fb = document.getElementById('abbrFeedback');
@@ -1639,15 +1998,16 @@ function showAbbrQuestion() {
   const btn = document.getElementById('abbrSubmitBtn');
   btn.textContent = 'Check ✓';
 
-  // State flag
+  // Flag
   const flagEl = document.getElementById('abbrFlag');
-  flagEl.src = `https://flagcdn.com/us-${s.abbr.toLowerCase()}.svg`;
+  flagEl.src = CTX.getFlagUrl(s);
   flagEl.alt = `Flag of ${s.name}`;
   flagEl.style.display = 'block';
   flagEl.onerror = () => { flagEl.style.display = 'none'; };
 
-  document.getElementById('abbrProgressText').textContent = `${abbrIdx + 1} / 50`;
-  document.getElementById('abbrProgressFill').style.width = `${(abbrIdx / 50) * 100}%`;
+  const total = CTX.total;
+  document.getElementById('abbrProgressText').textContent = `${abbrIdx + 1} / ${total}`;
+  document.getElementById('abbrProgressFill').style.width = `${(abbrIdx / total) * 100}%`;
 
   setTimeout(() => input.focus(), 50);
 }
@@ -1662,8 +2022,9 @@ function submitAbbrAnswer() {
   const val   = input.value.trim();
   if (!val) return;
 
+  const abbrVal = s[CTX.abbrKey];
   const isCorrect = abbrMode === 'name-to-abbr'
-    ? val.toUpperCase() === s.abbr
+    ? val.toUpperCase() === abbrVal.toUpperCase()
     : val.toLowerCase() === s.name.toLowerCase();
 
   if (isCorrect) {
@@ -1688,7 +2049,8 @@ function submitAbbrAnswer() {
     void card.offsetWidth; // force reflow so re-adding shake restarts animation
     card.classList.add('shake');
 
-    const answer = abbrMode === 'name-to-abbr' ? s.abbr : s.name;
+    const answer = abbrMode === 'name-to-abbr' ? abbrVal : s.name;
+    const itemLabel = CTX.quiz === 'world' ? 'country' : 'state';
 
     if (abbrCurrentWrong >= 4) {
       showOreoMessage(`It's "${answer}"! 🐾`);
@@ -1702,11 +2064,10 @@ function submitAbbrAnswer() {
       setTimeout(() => { abbrIdx++; showAbbrQuestion(); }, 2200);
     } else if (abbrCurrentWrong === 3) {
       if (abbrMode === 'name-to-abbr') {
-        // They know both letters now — auto-reveal sooner
-        showOreoMessage(`It's "${s.abbr}"! 🐾`);
-        fb.textContent = `The answer is: ${s.abbr}`;
+        showOreoMessage(`It's "${abbrVal}"! 🐾`);
+        fb.textContent = `The answer is: ${abbrVal}`;
         fb.className = 'abbr-feedback wrong';
-        input.value = s.abbr;
+        input.value = abbrVal;
         input.classList.remove('wrong');
         input.classList.add('correct');
         abbrRevealed = true;
@@ -1714,7 +2075,6 @@ function submitAbbrAnswer() {
         setTimeout(() => { abbrIdx++; showAbbrQuestion(); }, 2200);
         return;
       } else {
-        // First 3 letters of the state name
         showOreoMessage(`It starts with "${s.name.slice(0, 3)}…" 🐾`);
       }
       fb.textContent = "Not quite — check Oreo's hint!";
@@ -1722,11 +2082,9 @@ function submitAbbrAnswer() {
       setTimeout(() => { input.value = ''; input.classList.remove('wrong'); input.focus(); }, 400);
     } else if (abbrCurrentWrong === 2) {
       if (abbrMode === 'name-to-abbr') {
-        // First letter is always obvious — hint the second letter
-        showOreoMessage(`The second letter is "${s.abbr[1]}" 🐾`);
+        showOreoMessage(`The second letter is "${abbrVal[1]}" 🐾`);
       } else {
-        // Number of letters in the state name
-        showOreoMessage(`The state name has ${s.name.length} letters 🐾`);
+        showOreoMessage(`The ${itemLabel} name has ${s.name.length} letters 🐾`);
       }
       fb.textContent = 'Try again!';
       fb.className = 'abbr-feedback wrong';
@@ -1751,7 +2109,7 @@ function exitAbbrGame() {
 }
 
 function showAbbrEnd() {
-  const pct     = abbrCorrect / 50;
+  const pct     = abbrCorrect / CTX.total;
   const trophy  = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🥈' : pct >= 0.5 ? '🥉' : '⭐';
   const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
   const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? "Oreo thinks you're paw-some!" : pct >= 0.5 ? "More practice and you'll nail it!" : 'Every quiz makes you better!';
@@ -1760,9 +2118,10 @@ function showAbbrEnd() {
   document.getElementById('endTitle').textContent     = title;
   document.getElementById('endTagline').textContent   = tagline;
   document.getElementById('endScoreBig').textContent  = abbrCorrect * 2;
+  document.getElementById('endScoreMax').textContent  = CTX.total * 2;
   document.getElementById('endLabel1').textContent    = 'Correct';
   document.getElementById('endLabel2').textContent    = 'Best Streak';
-  document.getElementById('endStates').textContent    = `${abbrCorrect}/50`;
+  document.getElementById('endStates').textContent    = `${abbrCorrect}/${CTX.total}`;
   document.getElementById('endCapitals').textContent  = abbrBestStreak;
   document.getElementById('endModal').style.display   = 'flex';
   launchConfetti();
