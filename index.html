@@ -16,6 +16,7 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:image" content="https://r10forthewin.github.io/map-quiz/oreo-logo.png">
   <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="oreo-logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="./d3.min.js"></script>
   <script src="./topojson.min.js"></script>
@@ -346,7 +347,7 @@
       cursor: grab;
       transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
       user-select: none;
-      touch-action: none;
+      touch-action: manipulation;
       white-space: normal;
       word-break: break-word;
       line-height: 1.2;
@@ -1275,6 +1276,8 @@ let hintingStates = {}; // { 'fips-type': true } — tracks active hints
 let scStates = 0, scCapitals = 0;
 let currentStreak = 0, longestStreak = 0;
 let dragItem = null;
+let pendingTouchDrag = null;
+let touchDragTimer   = null;
 let prevHoverEl = null;
 let currentHoverFips = null;
 let mapFeatures      = null;
@@ -1458,21 +1461,57 @@ function onPointerDown(e) {
   const el = e.currentTarget;
   if (el.classList.contains('used') || el.classList.contains('correct')) return;
   if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
-  e.preventDefault();
 
+  if (e.pointerType !== 'touch') {
+    // Mouse / pen: start drag immediately
+    e.preventDefault();
+    initDrag(el, e.clientX, e.clientY);
+  } else {
+    // Touch: wait for a short hold to distinguish drag from bank-list scroll
+    pendingTouchDrag = { el, startX: e.clientX, startY: e.clientY };
+    touchDragTimer = setTimeout(() => {
+      if (!pendingTouchDrag) return;
+      const { el: dragEl, startX, startY } = pendingTouchDrag;
+      clearPendingTouchDrag();
+      initDrag(dragEl, startX, startY);
+    }, 250);
+    document.addEventListener('pointermove', onPendingTouchMove);
+    document.addEventListener('pointerup',    onPendingTouchEnd);
+    document.addEventListener('pointercancel', onPendingTouchEnd);
+  }
+}
+
+function onPendingTouchMove(e) {
+  if (!pendingTouchDrag) return;
+  const dx = Math.abs(e.clientX - pendingTouchDrag.startX);
+  const dy = Math.abs(e.clientY - pendingTouchDrag.startY);
+  if (dx > 8 || dy > 8) clearPendingTouchDrag(); // user is scrolling
+}
+
+function onPendingTouchEnd() { clearPendingTouchDrag(); }
+
+function clearPendingTouchDrag() {
+  clearTimeout(touchDragTimer);
+  pendingTouchDrag = null;
+  document.removeEventListener('pointermove',  onPendingTouchMove);
+  document.removeEventListener('pointerup',    onPendingTouchEnd);
+  document.removeEventListener('pointercancel', onPendingTouchEnd);
+}
+
+function initDrag(el, x, y) {
   dragItem = { type: el.dataset.type, value: el.dataset.value, sourceEl: el };
   ghost.textContent = el.dataset.value;
   ghost.style.display = 'block';
-  moveGhost(e.clientX, e.clientY);
+  moveGhost(x, y);
   el.style.opacity = '0.35';
-
-  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointermove', onPointerMove, { passive: false });
   document.addEventListener('pointerup',   onPointerUp);
   document.addEventListener('pointercancel', onPointerCancel);
 }
 
 function onPointerMove(e) {
   if (!dragItem) return;
+  e.preventDefault(); // prevent scroll while dragging
   moveGhost(e.clientX, e.clientY);
 
   ghost.style.visibility = 'hidden';
