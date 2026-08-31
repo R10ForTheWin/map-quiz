@@ -882,6 +882,33 @@
         Loading map…
       </div>
       <svg id="ws-map-svg" viewBox="0 0 975 500" preserveAspectRatio="xMidYMid meet" style="display:none"></svg>
+      <div class="map-controls" id="wsMapControls">
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="wsDoMapZoom(1.5)" title="Zoom in">+</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="wsDoMapPan(0,80)" title="Pan up">▲</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <button class="mc-btn" onclick="wsDoMapPan(80,0)" title="Pan left">◀</button>
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="wsDoMapPan(-80,0)" title="Pan right">▶</button>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="wsDoMapPan(0,-80)" title="Pan down">▼</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="wsDoMapZoom(0.67)" title="Zoom out">−</button>
+          <div class="mc-spacer"></div>
+        </div>
+      </div>
     </div>
     <div class="ws-form-wrap">
       <div class="ws-form-title">Write the name for each numbered spot on the map</div>
@@ -2344,6 +2371,7 @@ let wsItemByNum = {}, wsNumByItem = {};
 let wsAnswers = {}, wsWrongCounts = {};
 let wsCorrect = 0, wsStreak = 0, wsBestStreak = 0;
 let wsTopoCache = null;
+let wsZoomBehavior = null;
 
 function normWs(s) { return s.trim().toLowerCase().replace(/\s+/g, ' '); }
 
@@ -2579,6 +2607,13 @@ function renderWorksheetMap() {
       });
     pins.append('circle').attr('r', 14);
     pins.append('text').attr('font-size', 12).text(d => wsNumByItem[d.id]);
+
+    // Pinch / scroll / drag to zoom & pan (d3.zoom handles touch pinch natively)
+    wsZoomBehavior = d3.zoom()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => { g.attr('transform', event.transform); });
+    svg.call(wsZoomBehavior);
+    document.getElementById('wsMapControls').style.display = 'flex';
   };
 
   if (wsTopoCache) { draw(wsTopoCache); return; }
@@ -2589,6 +2624,16 @@ function renderWorksheetMap() {
     document.querySelector('.ws-map-wrap').innerHTML =
       '<p style="padding:24px;color:#c00;font-weight:700">Failed to load map. Please check your internet connection.</p>';
   });
+}
+
+function wsDoMapZoom(factor) {
+  if (!wsZoomBehavior) return;
+  d3.select('#ws-map-svg').transition().duration(220).call(wsZoomBehavior.scaleBy, factor);
+}
+
+function wsDoMapPan(dx, dy) {
+  if (!wsZoomBehavior) return;
+  d3.select('#ws-map-svg').transition().duration(180).call(wsZoomBehavior.translateBy, dx, dy);
 }
 
 // ── RESIZE ──
