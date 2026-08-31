@@ -274,6 +274,25 @@
     .ws-input:disabled { opacity: 0.85; cursor: default; }
     .ws-answer-note { font-size: 11px; font-weight: 800; color: var(--wrong-dark); padding-left: 2px; }
 
+    .ws-actions {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+      max-width: 980px; margin: 26px auto 6px;
+    }
+    .btn-submit {
+      background: var(--gold); color: #3a2a00; border: none; border-radius: var(--radius);
+      padding: 14px 30px; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900;
+      cursor: pointer; box-shadow: 0 5px 0 var(--gold-dark); transition: all 0.1s;
+    }
+    .btn-submit:hover  { transform: translateY(-2px); box-shadow: 0 7px 0 var(--gold-dark); }
+    .btn-submit:active { transform: translateY(2px);  box-shadow: 0 2px 0 var(--gold-dark); }
+    .btn-shuffle {
+      background: white; color: var(--primary); border: 2px solid var(--border); border-radius: var(--radius);
+      padding: 13px 24px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800;
+      cursor: pointer; transition: all 0.1s;
+    }
+    .btn-shuffle:hover  { background: var(--primary-light); border-color: var(--primary-mid); transform: translateY(-1px); }
+    .btn-shuffle:active { transform: translateY(1px); }
+
     /* ── MAIN APP ── */
     #app {
       display: flex;
@@ -791,7 +810,7 @@
     <h2 id="endTitle">Amazing Job, Rose!</h2>
     <p class="end-tagline" id="endTagline">You crushed it!</p>
     <div class="end-score-big" id="endScoreBig">100</div>
-    <div class="end-score-sub">out of <span id="endScoreMax">100</span> points</div>
+    <div class="end-score-sub">out of <span id="endScoreMax">100</span> points<span id="endScorePct"></span></div>
     <div class="end-breakdown" id="endBreakdown">
       <div class="bd-item">
         <div class="bd-label" id="endLabel1">States</div>
@@ -853,7 +872,6 @@
       <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="wsStreakBest">0</span></div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button class="btn-check" id="wsCheckBtn" onclick="checkAllWorksheet()" style="display:none">Check Answers ✓</button>
       <button class="btn-restart" onclick="exitWorksheetGame()">↩ Home</button>
     </div>
   </header>
@@ -868,6 +886,10 @@
     <div class="ws-form-wrap">
       <div class="ws-form-title">Write the name for each numbered spot on the map</div>
       <div class="ws-form-grid" id="wsFormGrid"></div>
+      <div class="ws-actions">
+        <button class="btn-submit" onclick="checkAllWorksheet()">Submit ✓</button>
+        <button class="btn-shuffle" onclick="startWorksheetGame(wsMode)">🔀 Shuffle &amp; Start Over</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2063,6 +2085,7 @@ function showEndModal() {
   document.getElementById('endTagline').textContent  = tagline;
   document.getElementById('endScoreBig').textContent = total;
   document.getElementById('endScoreMax').textContent = maxPts;
+  document.getElementById('endScorePct').textContent = ` (${Math.round(pct * 100)}%)`;
   document.getElementById('endLabel1').textContent   = CTX.nameLabel;
   document.getElementById('endLabel2').textContent   = CTX.capLabel;
   document.getElementById('endStates').textContent   = scStates   + '/' + CTX.total;
@@ -2301,6 +2324,7 @@ function showAbbrEnd() {
   document.getElementById('endTagline').textContent   = tagline;
   document.getElementById('endScoreBig').textContent  = abbrCorrect * 2;
   document.getElementById('endScoreMax').textContent  = CTX.total * 2;
+  document.getElementById('endScorePct').textContent  = ` (${Math.round(pct * 100)}%)`;
   document.getElementById('endLabel1').textContent    = 'Correct';
   document.getElementById('endLabel2').textContent    = 'Best Streak';
   document.getElementById('endStates').textContent    = `${abbrCorrect}/${CTX.total}`;
@@ -2347,7 +2371,6 @@ function startWorksheetGame(mode) {
   document.getElementById('endModal').style.display         = 'none';
   document.getElementById('worksheet-screen').style.display = 'flex';
   document.getElementById('wsTotal').textContent = CONTINENT_OCEAN_DATA.length;
-  document.getElementById('wsCheckBtn').style.display = mode === 'end' ? 'block' : 'none';
   updateWsStats();
 
   buildWorksheetForm();
@@ -2460,21 +2483,27 @@ function checkAllWorksheet() {
     const input = document.querySelector(`.ws-input[data-num="${num}"]`);
     const note  = document.getElementById(`wsNote-${num}`);
     const pin   = document.querySelector(`.ws-pin[data-id="${item.id}"]`);
-    const val   = input.value.trim();
-    const isCorrect = !!val && normWs(val) === normWs(item.name);
 
-    input.disabled = true;
-    input.classList.remove('correct', 'wrong');
-    if (isCorrect) {
-      input.classList.add('correct');
-      if (pin) pin.classList.add('correct');
-      note.textContent = '';
-      correctCount++;
+    // A field already graded by live-mode checking (correct, or revealed after
+    // 3 wrong tries) keeps its real outcome instead of being re-derived from
+    // the visible input value — a revealed answer would otherwise look "correct".
+    let isCorrect;
+    if (input.disabled) {
+      isCorrect = input.classList.contains('correct');
     } else {
-      input.classList.add('wrong');
-      if (pin) pin.classList.add('wrong');
-      note.textContent = `Answer: ${item.name}`;
+      const val = input.value.trim();
+      isCorrect = !!val && normWs(val) === normWs(item.name);
+      input.disabled = true;
+      input.classList.remove('correct', 'wrong');
+      input.classList.add(isCorrect ? 'correct' : 'wrong');
     }
+
+    if (pin) {
+      pin.classList.remove('correct', 'wrong');
+      pin.classList.add(isCorrect ? 'correct' : 'wrong');
+    }
+    note.textContent = isCorrect ? '' : `Answer: ${item.name}`;
+    if (isCorrect) correctCount++;
   }
   wsCorrect = correctCount;
   updateWsStats();
@@ -2506,6 +2535,7 @@ function showWorksheetEnd() {
   document.getElementById('endTagline').textContent  = tagline;
   document.getElementById('endScoreBig').textContent = wsCorrect;
   document.getElementById('endScoreMax').textContent = total;
+  document.getElementById('endScorePct').textContent = ` (${Math.round(pct * 100)}%)`;
   document.getElementById('endModal').style.display  = 'flex';
   launchConfetti();
 }
