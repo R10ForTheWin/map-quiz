@@ -222,6 +222,58 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.12);
     }
 
+    /* ── WORKSHEET SCREEN (Continents & Oceans — typed spelling) ── */
+    #worksheet-screen {
+      display: none; flex-direction: column;
+      height: 100vh; height: 100dvh;
+      overflow: hidden;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--bg);
+    }
+    .ws-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+    .ws-map-wrap {
+      flex: 0 0 auto; height: 42%; min-height: 200px;
+      position: relative; background: #bfe3f5; overflow: hidden;
+    }
+    #ws-map-svg { display: block; width: 100%; height: 100%; }
+    .ws-land   { fill: #b7dfa0; stroke: white; stroke-width: 0.6; }
+    .ws-guide-line { fill: none; stroke: #4a6a7e; stroke-width: 1.5; stroke-dasharray: 6,5; opacity: 0.65; }
+    .ws-pin circle { fill: var(--gold); stroke: white; stroke-width: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+    .ws-pin text {
+      font-family: 'Nunito', sans-serif; font-weight: 900; fill: #3a2a00;
+      text-anchor: middle; dominant-baseline: central; pointer-events: none;
+    }
+    .ws-pin.correct circle { fill: var(--correct); }
+    .ws-pin.wrong   circle { fill: var(--wrong); }
+    .ws-pin.correct text, .ws-pin.wrong text { fill: white; }
+
+    .ws-form-wrap { flex: 1; overflow-y: auto; padding: 14px 20px 26px; }
+    .ws-form-title {
+      font-size: 12px; font-weight: 800; color: var(--text-light);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px;
+    }
+    .ws-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 22px; max-width: 980px; margin: 0 auto; }
+    @media (max-width: 860px)  { .ws-form-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 540px)  { .ws-form-grid { grid-template-columns: 1fr; } }
+    .ws-field { display: flex; align-items: flex-start; gap: 8px; }
+    .ws-num {
+      font-weight: 900; color: var(--primary-dark); font-size: 15px;
+      min-width: 22px; text-align: right; flex-shrink: 0; padding-top: 9px;
+    }
+    .ws-input-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .ws-input {
+      width: 100%; border: 3px solid var(--border); border-radius: var(--radius-sm);
+      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700;
+      padding: 8px 10px; outline: none; transition: border-color 0.15s, background 0.15s;
+    }
+    .ws-input:focus  { border-color: var(--primary-mid); }
+    .ws-input.correct { border-color: var(--correct); background: var(--correct-light); }
+    .ws-input.wrong    { border-color: var(--wrong); background: var(--wrong-light); }
+    .ws-input.revealed { border-color: var(--gold); background: #fff8dc; }
+    .ws-input:disabled { opacity: 0.85; cursor: default; }
+    .ws-answer-note { font-size: 11px; font-weight: 800; color: var(--wrong-dark); padding-left: 2px; }
+
     /* ── MAIN APP ── */
     #app {
       display: flex;
@@ -605,10 +657,11 @@
       background: var(--bg); border-radius: var(--radius-sm); padding: 4px;
     }
     .quiz-tab {
-      flex: 1; padding: 9px 8px; border: 2px solid transparent;
+      flex: 1; min-width: 0; padding: 9px 6px; border: 2px solid transparent;
       border-radius: 8px; background: transparent;
-      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+      font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
       cursor: pointer; transition: all 0.15s; color: var(--text-light);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .quiz-tab.active {
       background: white; color: var(--primary);
@@ -646,6 +699,7 @@
     <div class="quiz-tabs">
       <button class="quiz-tab active" id="tabBtnUsa" onclick="switchQuizTab('usa')">🇺🇸 USA States</button>
       <button class="quiz-tab" id="tabBtnWorld" onclick="switchQuizTab('world')">🌍 World Countries</button>
+      <button class="quiz-tab" id="tabBtnContinents" onclick="switchQuizTab('continents')">🌎 Continents</button>
     </div>
 
     <!-- USA TAB -->
@@ -707,6 +761,26 @@
         </span>
       </button>
     </div>
+
+    <!-- CONTINENTS TAB -->
+    <div id="tab-continents" style="display:none">
+      <div class="study-guide-header map-header">Continents, Oceans &amp; Lines — type the spelling!</div>
+      <button class="mode-btn live" onclick="startWorksheetGame('live')">
+        <span class="m-text">
+          <span class="m-title">Score As You Go</span>
+          <span class="m-desc">Instant right / wrong feedback on every answer</span>
+        </span>
+      </button>
+      <button class="mode-btn end" onclick="startWorksheetGame('end')">
+        <span class="m-text">
+          <span class="m-title">Score At The End</span>
+          <span class="m-desc">Fill in every blank, then check your score</span>
+        </span>
+      </button>
+      <p style="font-size:11px;font-weight:700;color:var(--text-light);margin-top:10px;padding:0 2px;">
+        No word bank — the numbers on the map shuffle every round, so she has to spell each answer herself.
+      </p>
+    </div>
   </div>
 </div>
 
@@ -718,7 +792,7 @@
     <p class="end-tagline" id="endTagline">You crushed it!</p>
     <div class="end-score-big" id="endScoreBig">100</div>
     <div class="end-score-sub">out of <span id="endScoreMax">100</span> points</div>
-    <div class="end-breakdown">
+    <div class="end-breakdown" id="endBreakdown">
       <div class="bd-item">
         <div class="bd-label" id="endLabel1">States</div>
         <div class="bd-value" id="endStates">50/50</div>
@@ -762,6 +836,38 @@
         <button class="abbr-btn" id="abbrSubmitBtn" onclick="submitAbbrAnswer()">Check ✓</button>
       </div>
       <div class="abbr-feedback" id="abbrFeedback"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WORKSHEET SCREEN (Continents, Oceans & Lines — typed spelling) -->
+<div id="worksheet-screen">
+  <header class="header">
+    <div class="header-brand">
+      <img src="oreo-logo.png" alt="Oreo" style="height:34px;width:34px;object-fit:contain;border-radius:50%;background:white;padding:1px;">
+      <h1>Continents &amp; Oceans</h1>
+    </div>
+    <div class="header-scores">
+      <div class="score-pill">✓ <span class="s-num" id="wsScoreCorrect">0</span>/<span id="wsTotal">14</span></div>
+      <div class="score-pill streak-pill">🔥 Streak <span class="s-num" id="wsStreakCurrent">0</span></div>
+      <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="wsStreakBest">0</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-check" id="wsCheckBtn" onclick="checkAllWorksheet()" style="display:none">Check Answers ✓</button>
+      <button class="btn-restart" onclick="exitWorksheetGame()">↩ Home</button>
+    </div>
+  </header>
+  <div class="ws-body">
+    <div class="ws-map-wrap">
+      <div id="ws-map-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--text-light);font-weight:800;font-size:15px;">
+        <div style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        Loading map…
+      </div>
+      <svg id="ws-map-svg" viewBox="0 0 975 500" preserveAspectRatio="xMidYMid meet" style="display:none"></svg>
+    </div>
+    <div class="ws-form-wrap">
+      <div class="ws-form-title">Write the name for each numbered spot on the map</div>
+      <div class="ws-form-grid" id="wsFormGrid"></div>
     </div>
   </div>
 </div>
@@ -1196,6 +1302,27 @@ WORLD_DATA.forEach(c => {
   byWorldCapital[c.capital] = c.id;
 });
 
+// ── CONTINENTS, OCEANS & LINES (worksheet quiz — typed spelling, no word bank) ──
+// lon/lat = where the numbered pin sits on the map
+const CONTINENT_OCEAN_DATA = [
+  { id:'na',  name:'North America',   kind:'continent', lon:-100, lat:45,  hint:'home to the USA, Canada & Mexico' },
+  { id:'sa',  name:'South America',   kind:'continent', lon:-60,  lat:-15, hint:'home to the Amazon Rainforest' },
+  { id:'eu',  name:'Europe',          kind:'continent', lon:15,   lat:50,  hint:'west of Asia, north of Africa' },
+  { id:'af',  name:'Africa',          kind:'continent', lon:20,   lat:5,   hint:'home to the Sahara Desert & the Nile River' },
+  { id:'as',  name:'Asia',            kind:'continent', lon:90,   lat:48,  hint:'the largest continent on Earth' },
+  { id:'au',  name:'Australia',       kind:'continent', lon:135,  lat:-25, hint:'the smallest continent — also a country!' },
+  { id:'an',  name:'Antarctica',      kind:'continent', lon:0,    lat:-82, hint:'the icy continent at the South Pole' },
+  { id:'pac', name:'Pacific Ocean',   kind:'ocean',      lon:-150,lat:0,   hint:'the largest ocean on Earth' },
+  { id:'atl', name:'Atlantic Ocean',  kind:'ocean',      lon:-35, lat:18,  hint:'between the Americas and Europe & Africa' },
+  { id:'ind', name:'Indian Ocean',    kind:'ocean',      lon:75,  lat:-25, hint:'east of Africa, south of Asia' },
+  { id:'sou', name:'Southern Ocean',  kind:'ocean',      lon:-30, lat:-64, hint:'the ocean that surrounds Antarctica' },
+  { id:'arc', name:'Arctic Ocean',    kind:'ocean',      lon:0,   lat:82,  hint:'the smallest ocean, at the North Pole' },
+  { id:'eq',  name:'Equator',         kind:'line',       lon:165, lat:0,   hint:"0° latitude — Earth's imaginary belt, splitting it into north & south" },
+  { id:'pm',  name:'Prime Meridian',  kind:'line',       lon:0,   lat:-35, hint:"0° longitude — the imaginary line splitting Earth into east & west" },
+];
+const byCOId = {};
+CONTINENT_OCEAN_DATA.forEach(c => { byCOId[c.id] = c; });
+
 // ── QUIZ CONTEXT ──
 let CTX = null;
 
@@ -1264,10 +1391,12 @@ function setQuizContext(quiz) {
 }
 
 function switchQuizTab(tab) {
-  document.getElementById('tab-usa').style.display   = tab==='usa'   ? '' : 'none';
-  document.getElementById('tab-world').style.display = tab==='world' ? '' : 'none';
-  document.getElementById('tabBtnUsa').classList.toggle('active',   tab==='usa');
-  document.getElementById('tabBtnWorld').classList.toggle('active', tab==='world');
+  document.getElementById('tab-usa').style.display        = tab==='usa'        ? '' : 'none';
+  document.getElementById('tab-world').style.display      = tab==='world'      ? '' : 'none';
+  document.getElementById('tab-continents').style.display = tab==='continents' ? '' : 'none';
+  document.getElementById('tabBtnUsa').classList.toggle('active',        tab==='usa');
+  document.getElementById('tabBtnWorld').classList.toggle('active',      tab==='world');
+  document.getElementById('tabBtnContinents').classList.toggle('active', tab==='continents');
 }
 
 // ── GAME STATE ──
@@ -1326,11 +1455,13 @@ function startGame(mode, quiz) {
 }
 
 function resetGame() {
-  document.getElementById('endModal').style.display    = 'none';
-  document.getElementById('abbr-screen').style.display = 'none';
+  document.getElementById('endModal').style.display        = 'none';
+  document.getElementById('abbr-screen').style.display      = 'none';
+  document.getElementById('worksheet-screen').style.display = 'none';
   document.getElementById('startModal').style.display  = 'flex';
   document.getElementById('mapControls').style.display = 'none';
   if (mapZoomBehavior) d3.select('#map-svg').call(mapZoomBehavior.transform, d3.zoomIdentity);
+  wsMode = null;
   // map will be fully re-rendered on next startGame
 }
 
@@ -1926,6 +2057,7 @@ function showEndModal() {
   const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
   const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? "Oreo thinks you're paw-some!" : pct >= 0.5 ? "More practice and you'll nail it!" : 'Every quiz makes you better!';
 
+  document.getElementById('endBreakdown').style.display = 'flex';
   document.getElementById('endTrophy').textContent   = trophy;
   document.getElementById('endTitle').textContent    = title;
   document.getElementById('endTagline').textContent  = tagline;
@@ -2163,6 +2295,7 @@ function showAbbrEnd() {
   const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
   const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? "Oreo thinks you're paw-some!" : pct >= 0.5 ? "More practice and you'll nail it!" : 'Every quiz makes you better!';
 
+  document.getElementById('endBreakdown').style.display = 'flex';
   document.getElementById('endTrophy').textContent    = trophy;
   document.getElementById('endTitle').textContent     = title;
   document.getElementById('endTagline').textContent   = tagline;
@@ -2181,9 +2314,257 @@ document.getElementById('abbrInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') submitAbbrAnswer();
 });
 
+// ── WORKSHEET QUIZ (Continents, Oceans & Lines — typed spelling, no word bank) ──
+let wsMode = null;
+let wsItemByNum = {}, wsNumByItem = {};
+let wsAnswers = {}, wsWrongCounts = {};
+let wsCorrect = 0, wsStreak = 0, wsBestStreak = 0;
+let wsTopoCache = null;
+
+function normWs(s) { return s.trim().toLowerCase().replace(/\s+/g, ' '); }
+
+function shuffleWorksheetNumbers() {
+  const ids = CONTINENT_OCEAN_DATA.map(d => d.id);
+  for (let i = ids.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+  }
+  wsItemByNum = {}; wsNumByItem = {};
+  ids.forEach((id, idx) => {
+    const num = idx + 1;
+    wsItemByNum[num] = byCOId[id];
+    wsNumByItem[id]  = num;
+  });
+}
+
+function startWorksheetGame(mode) {
+  wsMode = mode;
+  wsAnswers = {}; wsWrongCounts = {};
+  wsCorrect = 0; wsStreak = 0; wsBestStreak = 0;
+  shuffleWorksheetNumbers();
+
+  document.getElementById('startModal').style.display       = 'none';
+  document.getElementById('endModal').style.display         = 'none';
+  document.getElementById('worksheet-screen').style.display = 'flex';
+  document.getElementById('wsTotal').textContent = CONTINENT_OCEAN_DATA.length;
+  document.getElementById('wsCheckBtn').style.display = mode === 'end' ? 'block' : 'none';
+  updateWsStats();
+
+  buildWorksheetForm();
+  setTimeout(renderWorksheetMap, 200);
+  setTimeout(() => {
+    const first = document.querySelector('.ws-input[data-num="1"]');
+    if (first) first.focus();
+  }, 260);
+}
+
+function buildWorksheetForm() {
+  const grid = document.getElementById('wsFormGrid');
+  grid.innerHTML = '';
+  for (let num = 1; num <= CONTINENT_OCEAN_DATA.length; num++) {
+    const item = wsItemByNum[num];
+    const field = document.createElement('div');
+    field.className = 'ws-field';
+    field.innerHTML = `
+      <span class="ws-num">${num}.</span>
+      <div class="ws-input-col">
+        <input class="ws-input" type="text" autocomplete="off" autocorrect="off"
+               autocapitalize="words" spellcheck="false"
+               data-num="${num}" data-id="${item.id}" placeholder="Type the name…">
+        <span class="ws-answer-note" id="wsNote-${num}"></span>
+      </div>`;
+    grid.appendChild(field);
+
+    const input = field.querySelector('.ws-input');
+    input.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      if (wsMode === 'live') {
+        // checkWorksheetField() itself advances focus on correct/revealed answers;
+        // moving focus here too would fire a second blur-triggered check on a wrong answer.
+        checkWorksheetField(num);
+      } else {
+        const next = document.querySelector(`.ws-input[data-num="${num + 1}"]`);
+        if (next) next.focus();
+      }
+    });
+    if (wsMode === 'live') {
+      input.addEventListener('blur', () => {
+        if (input.value.trim() && !input.disabled) checkWorksheetField(num);
+      });
+    }
+  }
+}
+
+function checkWorksheetField(num) {
+  const item  = wsItemByNum[num];
+  const input = document.querySelector(`.ws-input[data-num="${num}"]`);
+  if (!input || input.disabled) return;
+  const val = input.value.trim();
+  if (!val) return;
+
+  const pin = document.querySelector(`.ws-pin[data-id="${item.id}"]`);
+  const isCorrect = normWs(val) === normWs(item.name);
+
+  if (isCorrect) {
+    input.classList.remove('wrong');
+    input.classList.add('correct');
+    input.disabled = true;
+    if (pin) pin.classList.add('correct');
+    wsAnswers[item.id] = true;
+    wsCorrect++;
+    wsStreak++;
+    if (wsStreak > wsBestStreak) wsBestStreak = wsStreak;
+    updateWsStats();
+    showToast('✓ Correct!', 't-correct');
+    showOreoMessage(randomCatPun());
+    advanceWorksheet(num);
+  } else {
+    input.classList.add('wrong');
+    wsStreak = 0;
+    updateWsStats();
+    wsWrongCounts[num] = (wsWrongCounts[num] || 0) + 1;
+    const tries = wsWrongCounts[num];
+
+    if (tries >= 3) {
+      input.value = item.name;
+      input.classList.remove('wrong');
+      input.classList.add('revealed');
+      input.disabled = true;
+      if (pin) pin.classList.add('wrong');
+      wsAnswers[item.id] = false;
+      showOreoMessage(`It's "${item.name}"! 🐾`);
+      advanceWorksheet(num);
+    } else {
+      const left = 3 - tries;
+      showToast(`✗ Not quite — ${left} more ${left === 1 ? 'try' : 'tries'} before Oreo helps!`, 't-wrong');
+      if (tries === 2) showOreoMessage(`Psst! It's ${item.hint} 🐾`);
+      setTimeout(() => { input.classList.remove('wrong'); input.focus(); input.select(); }, 400);
+    }
+  }
+}
+
+function advanceWorksheet(num) {
+  if (Object.keys(wsAnswers).length === CONTINENT_OCEAN_DATA.length) {
+    setTimeout(showWorksheetEnd, 900);
+    return;
+  }
+  const next = document.querySelector(`.ws-input[data-num="${num + 1}"]`);
+  if (next && !next.disabled) setTimeout(() => next.focus(), 80);
+}
+
+function checkAllWorksheet() {
+  let correctCount = 0;
+  for (let num = 1; num <= CONTINENT_OCEAN_DATA.length; num++) {
+    const item  = wsItemByNum[num];
+    const input = document.querySelector(`.ws-input[data-num="${num}"]`);
+    const note  = document.getElementById(`wsNote-${num}`);
+    const pin   = document.querySelector(`.ws-pin[data-id="${item.id}"]`);
+    const val   = input.value.trim();
+    const isCorrect = !!val && normWs(val) === normWs(item.name);
+
+    input.disabled = true;
+    input.classList.remove('correct', 'wrong');
+    if (isCorrect) {
+      input.classList.add('correct');
+      if (pin) pin.classList.add('correct');
+      note.textContent = '';
+      correctCount++;
+    } else {
+      input.classList.add('wrong');
+      if (pin) pin.classList.add('wrong');
+      note.textContent = `Answer: ${item.name}`;
+    }
+  }
+  wsCorrect = correctCount;
+  updateWsStats();
+  setTimeout(showWorksheetEnd, 600);
+}
+
+function updateWsStats() {
+  document.getElementById('wsScoreCorrect').textContent  = wsCorrect;
+  document.getElementById('wsStreakCurrent').textContent = wsStreak;
+  document.getElementById('wsStreakBest').textContent    = wsBestStreak;
+}
+
+function exitWorksheetGame() {
+  document.getElementById('worksheet-screen').style.display = 'none';
+  document.getElementById('startModal').style.display = 'flex';
+  wsMode = null;
+}
+
+function showWorksheetEnd() {
+  const total   = CONTINENT_OCEAN_DATA.length;
+  const pct     = wsCorrect / total;
+  const trophy  = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🥈' : pct >= 0.5 ? '🥉' : '⭐';
+  const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
+  const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? "Oreo thinks you're paw-some!" : pct >= 0.5 ? "More practice and you'll nail it!" : 'Every quiz makes you better!';
+
+  document.getElementById('endBreakdown').style.display = 'none';
+  document.getElementById('endTrophy').textContent   = trophy;
+  document.getElementById('endTitle').textContent    = title;
+  document.getElementById('endTagline').textContent  = tagline;
+  document.getElementById('endScoreBig').textContent = wsCorrect;
+  document.getElementById('endScoreMax').textContent = total;
+  document.getElementById('endModal').style.display  = 'flex';
+  launchConfetti();
+}
+
+function renderWorksheetMap() {
+  const wrap = document.querySelector('.ws-map-wrap');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if (!W || !H) { setTimeout(renderWorksheetMap, 100); return; }
+
+  const svg = d3.select('#ws-map-svg').attr('width', W).attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+  svg.selectAll('*').remove();
+
+  const draw = (topo) => {
+    const projection = d3.geoNaturalEarth1()
+      .scale(Math.min(W / 6.0, H / 3.2))
+      .translate([W / 2, H / 2 + H * 0.02]);
+    const path = d3.geoPath().projection(projection);
+    const land = topojson.feature(topo, topo.objects.countries).features;
+    const mesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+
+    document.getElementById('ws-map-loading').style.display = 'none';
+    document.getElementById('ws-map-svg').style.display = 'block';
+
+    const g = svg.append('g');
+    g.selectAll('path.ws-land-piece').data(land).enter().append('path')
+      .attr('class', 'ws-land').attr('d', path);
+    g.append('path').datum(mesh)
+      .attr('fill', 'none').attr('stroke', 'white').attr('stroke-width', 0.6).attr('d', path);
+
+    const eqLine = { type: 'LineString', coordinates: d3.range(-180, 181, 4).map(lon => [lon, 0]) };
+    const pmLine = { type: 'LineString', coordinates: d3.range(-85, 86, 4).map(lat => [0, lat]) };
+    g.append('path').datum(eqLine).attr('class', 'ws-guide-line').attr('d', path);
+    g.append('path').datum(pmLine).attr('class', 'ws-guide-line').attr('d', path);
+
+    const pins = g.selectAll('.ws-pin').data(CONTINENT_OCEAN_DATA).enter().append('g')
+      .attr('class', 'ws-pin')
+      .attr('data-id', d => d.id)
+      .attr('transform', d => {
+        const pt = projection([d.lon, d.lat]);
+        return pt ? `translate(${pt[0]},${pt[1]})` : 'translate(-9999,-9999)';
+      });
+    pins.append('circle').attr('r', 14);
+    pins.append('text').attr('font-size', 12).text(d => wsNumByItem[d.id]);
+  };
+
+  if (wsTopoCache) { draw(wsTopoCache); return; }
+  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(topo => {
+    wsTopoCache = topo;
+    draw(topo);
+  }).catch(() => {
+    document.querySelector('.ws-map-wrap').innerHTML =
+      '<p style="padding:24px;color:#c00;font-weight:700">Failed to load map. Please check your internet connection.</p>';
+  });
+}
+
 // ── RESIZE ──
 window.addEventListener('resize', () => {
   if (gameMode) requestAnimationFrame(renderMap);
+  if (wsMode)   requestAnimationFrame(renderWorksheetMap);
 });
 
 // ── SERVICE WORKER ──
