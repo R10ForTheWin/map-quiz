@@ -293,6 +293,29 @@
     .btn-shuffle:hover  { background: var(--primary-light); border-color: var(--primary-mid); transform: translateY(-1px); }
     .btn-shuffle:active { transform: translateY(1px); }
 
+    /* ── DRAG & DROP SCREEN (Continents & Oceans — tiles onto the map) ── */
+    #dragdrop-screen {
+      display: none; flex-direction: column;
+      height: 100vh; height: 100dvh;
+      overflow: hidden;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .game-layout.cd-layout { grid-template-columns: 260px 1fr; }
+    .cd-target-hit { fill: rgba(0,0,0,0.001); stroke: none; cursor: pointer; }
+    .cd-target-ring {
+      fill: none; stroke: var(--primary-mid); stroke-width: 2; stroke-dasharray: 3,4;
+      opacity: 0.85; pointer-events: none;
+    }
+    .cd-target.drag-over .cd-target-ring { stroke: var(--gold); stroke-width: 3; opacity: 1; }
+    .cd-target.solved .cd-target-ring   { fill: var(--correct); fill-opacity: 0.9; stroke: var(--correct-dark); stroke-dasharray: none; }
+    .cd-target.revealed .cd-target-ring { fill: var(--gold); fill-opacity: 0.9; stroke: var(--gold-dark); stroke-dasharray: none; }
+    .cd-target.wrong-flash .cd-target-ring { stroke: var(--wrong); fill: var(--wrong); fill-opacity: 0.5; }
+    .cd-target-label {
+      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 10px; fill: #003a5c;
+      stroke: white; stroke-width: 2.5; paint-order: stroke fill; pointer-events: none;
+    }
+
     /* ── MAIN APP ── */
     #app {
       display: flex;
@@ -697,6 +720,9 @@
       .capitals-bank { order: 3; }
       .bank-list { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; padding: 8px; gap: 5px; }
       .token { flex-shrink: 0; }
+      .game-layout.cd-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 110px; }
+      .cd-layout .word-bank { order: 2; border-top: 2px solid var(--border); }
+      .cd-layout .map-container { order: 1; }
     }
   </style>
 </head>
@@ -799,6 +825,13 @@
       <p style="font-size:11px;font-weight:700;color:var(--text-light);margin-top:10px;padding:0 2px;">
         No word bank — the numbers on the map shuffle every round, so she has to spell each answer herself.
       </p>
+      <div class="study-guide-header abbr-header">Or Practice With Tiles</div>
+      <button class="mode-btn abbr" onclick="startDragDropGame()">
+        <span class="m-text">
+          <span class="m-title">Drag &amp; Drop Tiles</span>
+          <span class="m-desc">Drag each name from the word bank onto its spot on the map</span>
+        </span>
+      </button>
     </div>
   </div>
 </div>
@@ -918,6 +951,65 @@
         <button class="btn-shuffle" onclick="startWorksheetGame(wsMode)">🔀 Shuffle &amp; Start Over</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- DRAG & DROP SCREEN (Continents, Oceans & Lines — tiles onto the map) -->
+<div id="dragdrop-screen">
+  <header class="header">
+    <div class="header-brand">
+      <img src="oreo-logo.png" alt="Oreo" style="height:34px;width:34px;object-fit:contain;border-radius:50%;background:white;padding:1px;">
+      <h1>Continents &amp; Oceans</h1>
+    </div>
+    <div class="header-scores">
+      <div class="score-pill">✓ <span class="s-num" id="cdScoreCorrect">0</span>/<span id="cdTotal">14</span></div>
+      <div class="score-pill streak-pill">🔥 Streak <span class="s-num" id="cdStreakCurrent">0</span></div>
+      <div class="score-pill streak-pill">⭐ Best <span class="s-num" id="cdStreakBest">0</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn-shuffle" style="padding:7px 14px;font-size:12px;" onclick="startDragDropGame()">🔀 Shuffle &amp; Start Over</button>
+      <button class="btn-restart" onclick="exitDragDropGame()">↩ Home</button>
+    </div>
+  </header>
+  <div class="game-layout cd-layout">
+    <aside class="word-bank">
+      <div class="bank-header">🧩 Word Bank</div>
+      <div class="bank-list" id="cdBank"></div>
+    </aside>
+    <main class="map-container">
+      <div id="cd-map-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--text-light);font-weight:800;font-size:15px;">
+        <div style="width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        Loading map…
+      </div>
+      <svg id="cd-map-svg" viewBox="0 0 975 610" preserveAspectRatio="xMidYMid meet" style="display:none"></svg>
+      <div class="map-controls" id="cdMapControls">
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="cdDoMapZoom(1.5)" title="Zoom in">+</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="cdDoMapPan(0,80)" title="Pan up">▲</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <button class="mc-btn" onclick="cdDoMapPan(80,0)" title="Pan left">◀</button>
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="cdDoMapPan(-80,0)" title="Pan right">▶</button>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="cdDoMapPan(0,-80)" title="Pan down">▼</button>
+          <div class="mc-spacer"></div>
+        </div>
+        <div class="mc-row">
+          <div class="mc-spacer"></div>
+          <button class="mc-btn" onclick="cdDoMapZoom(0.67)" title="Zoom out">−</button>
+          <div class="mc-spacer"></div>
+        </div>
+      </div>
+    </main>
   </div>
 </div>
 
@@ -1507,10 +1599,12 @@ function resetGame() {
   document.getElementById('endModal').style.display        = 'none';
   document.getElementById('abbr-screen').style.display      = 'none';
   document.getElementById('worksheet-screen').style.display = 'none';
+  document.getElementById('dragdrop-screen').style.display  = 'none';
   document.getElementById('startModal').style.display  = 'flex';
   document.getElementById('mapControls').style.display = 'none';
   if (mapZoomBehavior) d3.select('#map-svg').call(mapZoomBehavior.transform, d3.zoomIdentity);
   wsMode = null;
+  cdActive = false;
   // map will be fully re-rendered on next startGame
 }
 
@@ -2370,7 +2464,7 @@ let wsMode = null;
 let wsItemByNum = {}, wsNumByItem = {};
 let wsAnswers = {}, wsWrongCounts = {};
 let wsCorrect = 0, wsStreak = 0, wsBestStreak = 0;
-let wsTopoCache = null;
+let worldTopoCache = null;
 let wsZoomBehavior = null;
 
 function normWs(s) { return s.trim().toLowerCase().replace(/\s+/g, ' '); }
@@ -2616,9 +2710,9 @@ function renderWorksheetMap() {
     document.getElementById('wsMapControls').style.display = 'flex';
   };
 
-  if (wsTopoCache) { draw(wsTopoCache); return; }
+  if (worldTopoCache) { draw(worldTopoCache); return; }
   d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(topo => {
-    wsTopoCache = topo;
+    worldTopoCache = topo;
     draw(topo);
   }).catch(() => {
     document.querySelector('.ws-map-wrap').innerHTML =
@@ -2636,10 +2730,312 @@ function wsDoMapPan(dx, dy) {
   d3.select('#ws-map-svg').transition().duration(180).call(wsZoomBehavior.translateBy, dx, dy);
 }
 
+// ── DRAG & DROP QUIZ (Continents, Oceans & Lines — tiles onto the map) ──
+let cdActive = false;
+let cdAnswers = {}, cdWrongCounts = {};
+let cdCorrect = 0, cdStreak = 0, cdBestStreak = 0;
+let cdZoomBehavior = null;
+let cdDragItem = null;
+let cdPendingTouchDrag = null, cdTouchDragTimer = null;
+let cdPrevHoverEl = null, cdCurrentHoverId = null;
+
+function startDragDropGame() {
+  cdActive = true;
+  cdAnswers = {}; cdWrongCounts = {};
+  cdCorrect = 0; cdStreak = 0; cdBestStreak = 0;
+
+  document.getElementById('startModal').style.display   = 'none';
+  document.getElementById('endModal').style.display     = 'none';
+  document.getElementById('dragdrop-screen').style.display = 'flex';
+  document.getElementById('cdTotal').textContent = CONTINENT_OCEAN_DATA.length;
+  updateCdStats();
+
+  cdBuildBank();
+  setTimeout(cdRenderMap, 200);
+}
+
+function exitDragDropGame() {
+  document.getElementById('dragdrop-screen').style.display = 'none';
+  document.getElementById('startModal').style.display = 'flex';
+  cdActive = false;
+}
+
+function cdBuildBank() {
+  const bank = document.getElementById('cdBank');
+  bank.innerHTML = '';
+  const sorted = [...CONTINENT_OCEAN_DATA].sort((a, b) => a.name.localeCompare(b.name));
+  sorted.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'token';
+    el.textContent = item.name;
+    el.dataset.value = item.name;
+    el.dataset.id    = item.id;
+    el.title = item.name;
+    el.addEventListener('pointerdown', cdTokenPointerDown);
+    bank.appendChild(el);
+  });
+}
+
+function updateCdStats() {
+  document.getElementById('cdScoreCorrect').textContent  = cdCorrect;
+  document.getElementById('cdStreakCurrent').textContent = cdStreak;
+  document.getElementById('cdStreakBest').textContent    = cdBestStreak;
+}
+
+// ── drag handlers (self-contained — mirrors the main token-drag flow, but
+// targets .cd-target map markers instead of the CTX/.state-path system) ──
+function cdTokenPointerDown(e) {
+  const el = e.currentTarget;
+  if (el.classList.contains('used')) return;
+  if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+
+  if (e.pointerType !== 'touch') {
+    e.preventDefault();
+    cdInitDrag(el, e.clientX, e.clientY);
+  } else {
+    cdPendingTouchDrag = { el, startX: e.clientX, startY: e.clientY };
+    cdTouchDragTimer = setTimeout(() => {
+      if (!cdPendingTouchDrag) return;
+      const { el: dragEl, startX, startY } = cdPendingTouchDrag;
+      cdClearPendingTouchDrag();
+      cdInitDrag(dragEl, startX, startY);
+    }, 250);
+    document.addEventListener('pointermove', cdOnPendingTouchMove);
+    document.addEventListener('pointerup',    cdOnPendingTouchEnd);
+    document.addEventListener('pointercancel', cdOnPendingTouchEnd);
+  }
+}
+
+function cdOnPendingTouchMove(e) {
+  if (!cdPendingTouchDrag) return;
+  const dx = Math.abs(e.clientX - cdPendingTouchDrag.startX);
+  const dy = Math.abs(e.clientY - cdPendingTouchDrag.startY);
+  if (dx > 8 || dy > 8) cdClearPendingTouchDrag();
+}
+function cdOnPendingTouchEnd() { cdClearPendingTouchDrag(); }
+function cdClearPendingTouchDrag() {
+  clearTimeout(cdTouchDragTimer);
+  cdPendingTouchDrag = null;
+  document.removeEventListener('pointermove',  cdOnPendingTouchMove);
+  document.removeEventListener('pointerup',    cdOnPendingTouchEnd);
+  document.removeEventListener('pointercancel', cdOnPendingTouchEnd);
+}
+
+function cdInitDrag(el, x, y) {
+  cdDragItem = { value: el.dataset.value, id: el.dataset.id, sourceEl: el };
+  ghost.textContent = el.dataset.value;
+  ghost.style.display = 'block';
+  moveGhost(x, y);
+  el.style.opacity = '0.35';
+  document.addEventListener('pointermove', cdOnPointerMove, { passive: false });
+  document.addEventListener('pointerup',   cdOnPointerUp);
+  document.addEventListener('pointercancel', cdOnPointerCancel);
+}
+
+function cdOnPointerMove(e) {
+  if (!cdDragItem) return;
+  e.preventDefault();
+  moveGhost(e.clientX, e.clientY);
+
+  ghost.style.visibility = 'hidden';
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  ghost.style.visibility = '';
+  const targetEl = under ? under.closest('.cd-target') : null;
+  const eligible = targetEl && !targetEl.classList.contains('solved') && !targetEl.classList.contains('revealed');
+
+  if (cdPrevHoverEl && cdPrevHoverEl !== targetEl) {
+    cdPrevHoverEl.classList.remove('drag-over');
+    cdPrevHoverEl = null;
+    cdCurrentHoverId = null;
+  }
+  if (eligible) {
+    targetEl.classList.add('drag-over');
+    cdCurrentHoverId = targetEl.dataset.id;
+    cdPrevHoverEl = targetEl;
+  }
+}
+
+function cdOnPointerUp() {
+  if (!cdDragItem) return;
+  ghost.style.display = 'none';
+  if (cdPrevHoverEl) { cdPrevHoverEl.classList.remove('drag-over'); cdPrevHoverEl = null; }
+
+  if (cdCurrentHoverId) {
+    cdHandleDrop(cdCurrentHoverId, cdDragItem.value, cdDragItem.sourceEl);
+  } else {
+    cdDragItem.sourceEl.style.opacity = '';
+  }
+  cdCleanupDrag();
+}
+
+function cdOnPointerCancel() {
+  if (cdDragItem) cdDragItem.sourceEl.style.opacity = '';
+  ghost.style.display = 'none';
+  if (cdPrevHoverEl) { cdPrevHoverEl.classList.remove('drag-over'); cdPrevHoverEl = null; }
+  cdCleanupDrag();
+}
+
+function cdCleanupDrag() {
+  cdDragItem = null;
+  cdCurrentHoverId = null;
+  document.removeEventListener('pointermove', cdOnPointerMove);
+  document.removeEventListener('pointerup',   cdOnPointerUp);
+  document.removeEventListener('pointercancel', cdOnPointerCancel);
+}
+
+function cdHandleDrop(id, value, sourceEl) {
+  const item = byCOId[id];
+  const targetG = document.querySelector(`.cd-target[data-id="${id}"]`);
+  if (!item || !targetG || targetG.classList.contains('solved') || targetG.classList.contains('revealed')) {
+    sourceEl.style.opacity = '';
+    return;
+  }
+  const correct = value === item.name;
+
+  if (correct) {
+    sourceEl.classList.add('used', 'correct');
+    sourceEl.style.opacity = '';
+    cdAnswers[id] = true;
+    cdCorrect++;
+    cdStreak++;
+    if (cdStreak > cdBestStreak) cdBestStreak = cdStreak;
+    updateCdStats();
+    targetG.classList.add('solved');
+    cdLabelTarget(targetG, item);
+    showToast('✓ Correct!', 't-correct');
+    showOreoMessage(randomCatPun());
+    cdAdvanceCheck();
+  } else {
+    sourceEl.style.opacity = '';
+    cdStreak = 0;
+    updateCdStats();
+    cdWrongCounts[id] = (cdWrongCounts[id] || 0) + 1;
+    const tries = cdWrongCounts[id];
+
+    targetG.classList.add('wrong-flash');
+    setTimeout(() => targetG.classList.remove('wrong-flash'), 700);
+
+    if (tries >= 3) {
+      document.querySelectorAll('#cdBank .token').forEach(t => {
+        if (t.dataset.id === id) { t.classList.add('used', 'correct'); t.style.opacity = ''; }
+      });
+      cdAnswers[id] = false;
+      targetG.classList.add('revealed');
+      cdLabelTarget(targetG, item);
+      showOreoMessage(`It's "${item.name}"! 🐾`);
+      cdAdvanceCheck();
+    } else {
+      const left = 3 - tries;
+      showToast(`✗ Not quite — ${left} more ${left === 1 ? 'try' : 'tries'} before Oreo helps!`, 't-wrong');
+      if (tries === 2) showOreoMessage(`Psst! It's ${item.hint} 🐾`);
+    }
+  }
+}
+
+function cdLabelTarget(targetG, item) {
+  const g = d3.select(targetG);
+  g.selectAll('.cd-target-label').remove();
+  g.append('text').attr('class', 'cd-target-label')
+    .attr('y', 24).attr('text-anchor', 'middle')
+    .text(item.name);
+}
+
+function cdAdvanceCheck() {
+  if (Object.keys(cdAnswers).length === CONTINENT_OCEAN_DATA.length) {
+    setTimeout(showCdEnd, 900);
+  }
+}
+
+function showCdEnd() {
+  const total   = CONTINENT_OCEAN_DATA.length;
+  const pct     = cdCorrect / total;
+  const trophy  = pct >= 0.9 ? '🏆' : pct >= 0.7 ? '🥈' : pct >= 0.5 ? '🥉' : '⭐';
+  const title   = pct >= 0.9 ? 'Amazing Job, Rose!' : pct >= 0.7 ? 'Great Work, Rose!' : pct >= 0.5 ? 'Good Effort, Rose!' : 'Keep Practicing, Rose!';
+  const tagline = pct >= 0.9 ? 'Oreo is so proud of you! 🐱' : pct >= 0.7 ? "Oreo thinks you're paw-some!" : pct >= 0.5 ? "More practice and you'll nail it!" : 'Every quiz makes you better!';
+
+  document.getElementById('endBreakdown').style.display = 'none';
+  document.getElementById('endTrophy').textContent   = trophy;
+  document.getElementById('endTitle').textContent    = title;
+  document.getElementById('endTagline').textContent  = tagline;
+  document.getElementById('endScoreBig').textContent = cdCorrect;
+  document.getElementById('endScoreMax').textContent = total;
+  document.getElementById('endScorePct').textContent = ` (${Math.round(pct * 100)}%)`;
+  document.getElementById('endModal').style.display  = 'flex';
+  launchConfetti();
+}
+
+function cdRenderMap() {
+  const container = document.querySelector('#dragdrop-screen .map-container');
+  const W = container.clientWidth, H = container.clientHeight;
+  if (!W || !H) { setTimeout(cdRenderMap, 100); return; }
+
+  const svg = d3.select('#cd-map-svg').attr('width', W).attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+  svg.selectAll('*').remove();
+
+  const draw = (topo) => {
+    const projection = d3.geoNaturalEarth1()
+      .scale(Math.min(W / 6.0, H / 3.2))
+      .translate([W / 2, H / 2 + H * 0.02]);
+    const path = d3.geoPath().projection(projection);
+    const land = topojson.feature(topo, topo.objects.countries).features;
+    const mesh = topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b);
+
+    document.getElementById('cd-map-loading').style.display = 'none';
+    document.getElementById('cd-map-svg').style.display = 'block';
+
+    const g = svg.append('g');
+    g.selectAll('path.ws-land-piece').data(land).enter().append('path')
+      .attr('class', 'ws-land').attr('d', path);
+    g.append('path').datum(mesh)
+      .attr('fill', 'none').attr('stroke', 'white').attr('stroke-width', 0.6).attr('d', path);
+
+    const eqLine = { type: 'LineString', coordinates: d3.range(-180, 181, 4).map(lon => [lon, 0]) };
+    const pmLine = { type: 'LineString', coordinates: d3.range(-85, 86, 4).map(lat => [0, lat]) };
+    g.append('path').datum(eqLine).attr('class', 'ws-guide-line').attr('d', path);
+    g.append('path').datum(pmLine).attr('class', 'ws-guide-line').attr('d', path);
+
+    const targets = g.selectAll('.cd-target').data(CONTINENT_OCEAN_DATA).enter().append('g')
+      .attr('class', 'cd-target')
+      .attr('data-id', d => d.id)
+      .attr('transform', d => {
+        const pt = projection([d.lon, d.lat]);
+        return pt ? `translate(${pt[0]},${pt[1]})` : 'translate(-9999,-9999)';
+      });
+    targets.append('circle').attr('class', 'cd-target-hit').attr('r', 30);
+    targets.append('circle').attr('class', 'cd-target-ring').attr('r', 13);
+
+    cdZoomBehavior = d3.zoom()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => { g.attr('transform', event.transform); });
+    svg.call(cdZoomBehavior);
+    document.getElementById('cdMapControls').style.display = 'flex';
+  };
+
+  if (worldTopoCache) { draw(worldTopoCache); return; }
+  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(topo => {
+    worldTopoCache = topo;
+    draw(topo);
+  }).catch(() => {
+    document.querySelector('#dragdrop-screen .map-container').innerHTML =
+      '<p style="padding:24px;color:#c00;font-weight:700">Failed to load map. Please check your internet connection.</p>';
+  });
+}
+
+function cdDoMapZoom(factor) {
+  if (!cdZoomBehavior) return;
+  d3.select('#cd-map-svg').transition().duration(220).call(cdZoomBehavior.scaleBy, factor);
+}
+
+function cdDoMapPan(dx, dy) {
+  if (!cdZoomBehavior) return;
+  d3.select('#cd-map-svg').transition().duration(180).call(cdZoomBehavior.translateBy, dx, dy);
+}
+
 // ── RESIZE ──
 window.addEventListener('resize', () => {
-  if (gameMode) requestAnimationFrame(renderMap);
-  if (wsMode)   requestAnimationFrame(renderWorksheetMap);
+  if (gameMode)  requestAnimationFrame(renderMap);
+  if (wsMode)    requestAnimationFrame(renderWorksheetMap);
+  if (cdActive)  requestAnimationFrame(cdRenderMap);
 });
 
 // ── SERVICE WORKER ──
